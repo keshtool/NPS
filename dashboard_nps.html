@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard NPS · Kesh Bank</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{--bg:#0a0a0a;--bg2:#141414;--bg3:#1e1e1e;--bg4:#282828;--green:#1db954;--green2:#15803d;--green-dim:rgba(29,185,84,.14);--green-b:rgba(29,185,84,.28);--white:#fff;--text:#e4e4e7;--dim:#71717a;--dim2:#3f3f46;--dim3:#27272a;--red:#f87171;--yellow:#fbbf24;--blue:#60a5fa;--orange:#fb923c}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);font-size:14px;min-height:100vh}
+/* HEADER */
+.header{background:var(--bg2);border-bottom:1px solid var(--dim3);padding:14px 28px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+.logo{display:flex;align-items:center;gap:0}
+.logo h1{font-size:26px;font-weight:800;color:var(--white);letter-spacing:-.5px}
+.logo h1 span{color:var(--green)}
+.logo-sub{font-size:12px;color:var(--dim);margin-top:2px;text-align:center}
+.logo-wrap{text-align:center}
+.hright{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.live-pill{display:flex;align-items:center;gap:6px;background:var(--green-dim);border:1px solid var(--green-b);color:var(--green);padding:5px 12px;border-radius:20px;font-size:12px;font-weight:500}
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--green)}
+.live-dot.pulse{animation:pulse 1.5s infinite}
+.live-dot.off{background:var(--dim2);animation:none}
+.live-pill.off{background:var(--bg3);border-color:var(--dim3);color:var(--dim)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+.btn-ref{background:var(--bg3);border:1px solid var(--dim3);color:var(--text);padding:6px 14px;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;transition:.2s}
+.btn-ref:hover{border-color:var(--green);color:var(--green)}
+.upd-time{font-size:11px;color:var(--dim)}
+/* LOAD BAR */
+.lb{height:2px;background:var(--bg2);overflow:hidden}
+.lf{height:100%;width:0;background:var(--green);transition:width .3s}
+.lf.run{animation:lrun 1.4s ease-in-out infinite}
+@keyframes lrun{0%{width:0;margin-left:0}50%{width:50%;margin-left:25%}100%{width:0;margin-left:100%}}
+/* FILTERS */
+.filters{background:var(--bg2);border-bottom:1px solid var(--dim3);padding:10px 28px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.fg{display:flex;align-items:center;gap:6px}
+.fg label{font-size:11px;font-weight:600;color:var(--dim);text-transform:uppercase;letter-spacing:.05em}
+.fg input,.fg select{background:var(--bg3);border:1px solid var(--dim3);border-radius:7px;padding:5px 9px;font-size:13px;color:var(--text);outline:none;transition:.2s}
+.fg input:focus,.fg select:focus{border-color:var(--green)}
+.fg select option{background:var(--bg3)}
+.qbtns{display:flex;gap:4px;flex-wrap:wrap}
+.qbtn{background:var(--bg3);border:1px solid var(--dim3);color:var(--dim);padding:5px 10px;border-radius:6px;font-size:12px;font-weight:500;cursor:pointer;transition:.2s}
+.qbtn:hover{border-color:var(--green);color:var(--green)}
+.qbtn.active{background:var(--green-dim);border-color:var(--green-b);color:var(--green)}
+.btn-clr{background:transparent;border:1px solid var(--dim3);color:var(--dim);padding:5px 12px;border-radius:7px;font-size:12px;cursor:pointer;transition:.2s}
+.btn-clr:hover{border-color:var(--red);color:var(--red)}
+/* TABS */
+.tabs{background:var(--bg2);border-bottom:1px solid var(--dim3);display:flex;padding:0 28px;overflow-x:auto}
+.tab{padding:12px 18px;cursor:pointer;border-bottom:2px solid transparent;font-weight:500;color:var(--dim);white-space:nowrap;font-size:13px;transition:.2s}
+.tab:hover{color:var(--text)}
+.tab.active{color:var(--green);border-bottom-color:var(--green)}
+/* CONTENT */
+.content{padding:22px 28px;max-width:1440px;margin:0 auto}
+.tbc{display:none}.tbc.active{display:block}
+/* CARDS */
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:20px}
+.card{background:var(--bg2);border:1px solid var(--dim3);border-radius:12px;padding:16px;transition:border-color .2s}
+.card:hover{border-color:var(--dim2)}
+.card-lbl{font-size:11px;color:var(--dim);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:7px}
+.card-val{font-size:26px;font-weight:700;line-height:1;color:var(--white)}
+.card-sub{font-size:11px;color:var(--dim);margin-top:4px}
+.card-nps{background:linear-gradient(145deg,#0a1a10,#0d1500);border-color:var(--green-b);grid-row:span 1}
+.pgb{height:5px;background:var(--dim3);border-radius:3px;overflow:hidden;margin-top:6px}
+.pgf{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--green2),var(--green));transition:width .6s}
+.cg{color:var(--green)!important}.cr{color:var(--red)!important}.cy{color:var(--yellow)!important}.cb{color:var(--blue)!important}
+/* NPS ZONE BAR */
+.zone-bar{display:flex;height:8px;border-radius:4px;overflow:hidden;margin:8px 0 4px;gap:1px}
+.zone-seg{flex:1;opacity:.7}
+.zone-pointer{position:relative}
+.zone-labels{display:flex;justify-content:space-between;font-size:10px;color:var(--dim)}
+.zone-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;margin-top:6px}
+.meta-row{display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--dim);margin-top:8px}
+.meta-val{color:var(--white);font-weight:600}
+/* CHARTS */
+.charts-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}
+@media(max-width:750px){.charts-row{grid-template-columns:1fr}}
+.charts-3{grid-template-columns:1fr 1fr 1fr}
+@media(max-width:1000px){.charts-3{grid-template-columns:1fr 1fr}}
+@media(max-width:650px){.charts-3{grid-template-columns:1fr}}
+.cbox{background:var(--bg2);border:1px solid var(--dim3);border-radius:12px;padding:18px}
+.cbox h3{font-size:13px;font-weight:600;color:var(--text);margin-bottom:14px;display:flex;align-items:center;gap:7px}
+.cwrap{position:relative;height:220px}
+.cwrap-lg{height:260px}
+/* TABLES */
+.tbox{background:var(--bg2);border:1px solid var(--dim3);border-radius:12px;overflow:hidden;margin-bottom:20px}
+.tbox-h{padding:14px 20px;border-bottom:1px solid var(--dim3);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.tbox-h h3{font-size:13px;font-weight:600;display:flex;align-items:center;gap:7px}
+.tcnt{font-size:12px;color:var(--dim);background:var(--bg3);padding:2px 9px;border-radius:20px}
+.ox{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th{background:var(--bg3);padding:9px 13px;text-align:left;font-size:11px;font-weight:600;color:var(--dim);text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--dim3);white-space:nowrap}
+th.tc{text-align:center}
+td{padding:9px 13px;border-bottom:1px solid var(--dim3);font-size:13px;vertical-align:middle}
+td.tc{text-align:center}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,.02)}
+.tfoot td{background:var(--bg3)!important;font-weight:600;border-top:1px solid var(--dim2)}
+.badge{display:inline-flex;align-items:center;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:600}
+.bp{background:rgba(29,185,84,.15);color:#4ade80;border:1px solid rgba(29,185,84,.3)}
+.bn{background:rgba(251,191,36,.1);color:var(--yellow);border:1px solid rgba(251,191,36,.25)}
+.bd{background:rgba(248,113,113,.1);color:var(--red);border:1px solid rgba(248,113,113,.25)}
+.ns{font-weight:700;font-size:14px}
+.nsp{color:var(--green)}.nsn{color:var(--yellow)}.nsd{color:var(--red)}
+.empty{text-align:center;padding:40px;color:var(--dim);font-size:13px}
+/* SEARCH */
+.srch{padding:11px 18px;border-bottom:1px solid var(--dim3)}
+.srch input{width:100%;background:var(--bg3);border:1px solid var(--dim3);border-radius:8px;padding:7px 12px;font-size:13px;color:var(--text);outline:none}
+.srch input::placeholder{color:var(--dim)}
+.srch input:focus{border-color:var(--green)}
+/* MULTI FILTERS */
+.mu-filters{padding:11px 18px;border-bottom:1px solid var(--dim3);display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.mu-filters label{font-size:11px;color:var(--dim);font-weight:600;text-transform:uppercase}
+.mu-filters select{background:var(--bg3);border:1px solid var(--dim3);border-radius:7px;padding:5px 9px;font-size:13px;color:var(--text);outline:none}
+.mu-filters select:focus{border-color:var(--green)}
+/* MULTI SUMMARY */
+.mu-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;padding:14px 18px;border-bottom:1px solid var(--dim3);background:var(--bg3)}
+.mu-stat{text-align:center}
+.mu-stat .v{font-size:22px;font-weight:700;color:var(--white)}
+.mu-stat .l{font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.05em;margin-top:2px}
+/* MULTI HISTORY */
+.mr-wrap{display:flex;flex-direction:column;gap:3px}
+.mr-line{display:flex;align-items:center;gap:6px;font-size:12px}
+.arr-d{color:var(--dim);font-size:10px;margin-left:5px}
+/* TOAST */
+.toast{position:fixed;bottom:22px;right:22px;background:var(--bg2);border:1px solid var(--green-b);color:var(--green);padding:10px 16px;border-radius:10px;font-size:13px;font-weight:500;opacity:0;transform:translateY(8px);transition:.3s;z-index:9999;pointer-events:none;max-width:300px}
+.toast.err{border-color:rgba(248,113,113,.4);color:var(--red)}
+.toast.show{opacity:1;transform:translateY(0)}
+/* SCROLLBAR */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--dim3);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--dim2)}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div style="width:200px"></div>
+  <div class="logo-wrap">
+    <div class="logo"><h1>Dashboard <span>NPS</span></h1></div>
+    <div class="logo-sub">Kesh Bank · Gestão de Experiência</div>
+  </div>
+  <div class="hright" style="width:200px;justify-content:flex-end">
+    <span class="upd-time" id="updTime"></span>
+    <div class="live-pill off" id="livePill"><div class="live-dot off" id="liveDot"></div><span id="liveText">Carregando…</span></div>
+    <button class="btn-ref" onclick="loadData()">↻</button>
+  </div>
+</div>
+<div class="lb"><div class="lf run" id="lf"></div></div>
+
+<div class="filters">
+  <div class="fg"><label>De</label><input type="date" id="fFrom" onchange="clearQBtn();applyF()"></div>
+  <div class="fg"><label>Até</label><input type="date" id="fTo" onchange="clearQBtn();applyF()"></div>
+  <div class="fg"><label>Empresa</label>
+    <select id="fEmp" onchange="applyF()"><option value="">Todas</option></select>
+  </div>
+  <div class="qbtns">
+    <button class="qbtn" id="qb-q1" onclick="setQ(1)">Q1</button>
+    <button class="qbtn" id="qb-q2" onclick="setQ(2)">Q2</button>
+    <button class="qbtn" id="qb-q3" onclick="setQ(3)">Q3</button>
+    <button class="qbtn" id="qb-q4" onclick="setQ(4)">Q4</button>
+    <button class="qbtn" id="qb-cm" onclick="setMesAtual()">Mês Atual</button>
+    <button class="qbtn" id="qb-pm" onclick="setMesAnterior()">Mês Anterior</button>
+    <button class="qbtn" id="qb-yr" onclick="setAno()">Ano Inteiro</button>
+  </div>
+  <button class="btn-clr" onclick="clearF()">✕ Limpar</button>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="showTab('g',this)">Visão Geral</div>
+  <div class="tab" onclick="showTab('m',this)">Por Mês</div>
+  <div class="tab" onclick="showTab('e',this)">Por Empresa</div>
+  <div class="tab" onclick="showTab('mu',this)">Multi-Respostas</div>
+  <div class="tab" onclick="showTab('d',this)">Respostas</div>
+</div>
+
+<div class="content">
+
+  <!-- VISÃO GERAL -->
+  <div id="t-g" class="tbc active">
+    <div class="cards" id="sc"></div>
+    <div class="charts-row">
+      <div class="cbox"><h3>📊 NPS por Mês</h3><div class="cwrap"><canvas id="cNPSBar"></canvas></div></div>
+      <div class="cbox"><h3>🎯 Distribuição de Resultados</h3><div class="cwrap"><canvas id="cDon"></canvas></div></div>
+    </div>
+    <div class="charts-row">
+      <div class="cbox"><h3>📊 Volume por Nota</h3><div class="cwrap"><canvas id="cNota"></canvas></div></div>
+      <div class="cbox"><h3>🏢 NPS por Empresa</h3><div class="cwrap cwrap-lg"><canvas id="cEmp"></canvas></div></div>
+    </div>
+    <div class="cbox" style="margin-bottom:20px"><h3>📈 Disparos, Respostas e Engajamento por Mês</h3><div class="cwrap cwrap-lg"><canvas id="cVolume"></canvas></div></div>
+  </div>
+
+  <!-- POR MÊS -->
+  <div id="t-m" class="tbc">
+    <div class="tbox">
+      <div class="tbox-h"><h3>📅 Métricas Mensais</h3></div>
+      <div class="ox"><table><thead><tr>
+        <th>Mês</th><th class="tc">Disparos</th><th class="tc">Respostas</th><th class="tc">Sem Interesse</th>
+        <th class="tc">Engajamento</th><th class="tc">Promotores</th><th class="tc">Neutros</th><th class="tc">Detratores</th><th class="tc">NPS</th>
+      </tr></thead><tbody id="tbm"></tbody></table></div>
+    </div>
+  </div>
+
+  <!-- POR EMPRESA -->
+  <div id="t-e" class="tbc">
+    <div class="tbox">
+      <div class="tbox-h"><h3>🏢 NPS por Empresa</h3><span class="tcnt" id="empCnt"></span></div>
+      <div class="ox"><table><thead><tr>
+        <th>Empresa</th><th class="tc">Disparos</th><th class="tc">Respostas</th><th class="tc">Sem Interesse</th>
+        <th class="tc">Engajamento</th><th class="tc">NPS Geral</th><th class="tc">T1 2026</th><th class="tc">T2 2026</th>
+        <th class="tc">1ª Pesquisa</th><th class="tc">Última Pesquisa</th>
+      </tr></thead><tbody id="tbe"></tbody></table></div>
+    </div>
+  </div>
+
+  <!-- MULTI-RESPOSTAS -->
+  <div id="t-mu" class="tbc">
+    <div class="tbox">
+      <div class="tbox-h"><h3>🔄 Usuários com Múltiplas Respostas</h3><span class="tcnt" id="muCnt"></span></div>
+      <div class="mu-summary" id="muSummary"></div>
+      <div class="mu-filters">
+        <label>Resultado</label>
+        <select id="fMuRes" onchange="renderMulti()">
+          <option value="">Todos</option>
+          <option value="Melhorou">Melhorou</option>
+          <option value="Manteve">Manteve</option>
+          <option value="Piorou">Piorou</option>
+        </select>
+        <label>Nota Atual</label>
+        <select id="fMuNota" onchange="renderMulti()">
+          <option value="">Todas</option>
+          <option value="Promotor">Promotor</option>
+          <option value="Neutro">Neutro</option>
+          <option value="Detrator">Detrator</option>
+        </select>
+      </div>
+      <div class="ox"><table><thead><tr>
+        <th>Nome</th><th>Empresa</th><th class="tc">Respostas</th><th>Histórico de Notas</th><th>Resultado</th>
+      </tr></thead><tbody id="tbmu"></tbody></table></div>
+    </div>
+  </div>
+
+  <!-- RESPOSTAS -->
+  <div id="t-d" class="tbc">
+    <div class="tbox">
+      <div class="tbox-h"><h3>📋 Todas as Respostas</h3><span class="tcnt" id="dCnt"></span></div>
+      <div class="srch"><input type="text" id="srch" placeholder="🔍  Buscar por nome, empresa, motivo…" oninput="renderD()"></div>
+      <div class="ox"><table><thead><tr>
+        <th>Data</th><th>Nome</th><th>Empresa</th><th>Nota</th><th>Resultado</th><th>Motivo</th>
+      </tr></thead><tbody id="tbd"></tbody></table></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx5xvGgRsBxwxPFAgGLxuDtpMj67PXmtnt6aH_f2U-pd4MZvHipoKEns_CqbBql0WaT/exec';
+const FALLBACK = {"respostas":[{"data":"2026-01-05","telefone":"5548988167400","nota":"😁 Ótima","motivo":"Atendimento muito bom","nome":"Schaiene Bock Bernardes Rocha","empresa":"Kesh Bank","resultado":"Promotor"},{"data":"2026-01-05","telefone":"5511992437133","nota":"😁 Ótima","motivo":"Fácil utilização , atendimento e crédito com cashback","nome":"Andre Keselring Rodrigues","empresa":"Kesh Bank","resultado":"Promotor"},{"data":"2026-01-05","telefone":"5511999749632","nota":"😁 Ótima","motivo":"facilidade de uso do app","nome":"Gabriela Marcello Iannaccone","empresa":"Kesh Bank","resultado":"Promotor"},{"data":"2026-01-05","telefone":"5531987834078","nota":"😁 Ótima","motivo":"Atendimento e CF com juros transformados em recompensas","nome":"Thales Barbosa Miranda","empresa":"Kesh Bank","resultado":"Promotor"},{"data":"2026-01-05","telefone":"5512996166820","nota":"😁 Ótima","motivo":"Ótimo app","nome":"Amilcar Biondi Mendes Da Silva","empresa":"Kesh Bank","resultado":"Promotor"},{"data":"2026-01-05","telefone":"5511991863679","nota":"😁 Ótima","motivo":"Atendimento rápido e facil","nome":"Sidney Cancherini Garcia","empresa":"Kesh Bank","resultado":"Promotor"},{"data":"2026-01-06","telefone":"5511981899945","nota":"😁 Ótima","motivo":"tudo funciona muito bem e rapido","nome":"Marcelo Chaves Ramos Da Silva","empresa":"Kesh Bank","resultado":"Promotor"},{"data":"2026-01-06","telefone":"5511963753827","nota":"😁 Ótima","motivo":"a vantagem do crédito fácil voltar 100% dos juros é única.","nome":"Fabio Manfrinato","empresa":"Kesh Bank","resultado":"Promotor"},{"data":"2026-01-09","telefone":"5511963989393","nota":"😁 Ótima","motivo":"Acho muito prático","nome":"Gabriella Cordaro Schnarndorf","empresa":"Kesh Bank","resultado":"Promotor"},{"data":"2026-01-20","telefone":"5528999793232","nota":"🙂 Boa","motivo":"O app tem atendido a expectativas.","nome":"Michael Paula Da Silva","empresa":"VSP - Vigilância e Segurança Patrimonial","resultado":"Promotor"},{"data":"2026-01-20","telefone":"5527988033231","nota":"🙂 Boa","motivo":"Agilidade","nome":"Luiz Sampaio Pereira","empresa":"VSP - Vigilância e Segurança Patrimonial","resultado":"Promotor"},{"data":"2026-01-20","telefone":"5527996154391","nota":"😁 Ótima","motivo":"Muito boa! Satisfeito.","nome":"Walter Luiz Da Silva Pereira","empresa":"VSP - Vigilância e Segurança Patrimonial","resultado":"Promotor"},{"data":"2026-01-20","telefone":"5528999426968","nota":"🙂 Boa","motivo":"Bom","nome":"Cristiano Nalim","empresa":"VSP - Vigilância e Segurança Patrimonial","resultado":"Promotor"},{"data":"2026-01-20","telefone":"5527992857213","nota":"😁 Ótima","motivo":"Eficiência","nome":"Welington Otilio Da Silva","empresa":"VSP - Vigilância e Segurança Patrimonial","resultado":"Promotor"},{"data":"2026-01-20","telefone":"5528998823324","nota":"😁 Ótima","motivo":"Pela praticidade!","nome":"Francieli Araujo Vidal","empresa":"VSP - Vigilância e Segurança Patrimonial","resultado":"Promotor"},{"data":"2026-01-20","telefone":"5527999559751","nota":"🙂 Boa","motivo":"Esta me atendendo bem quando preciso.","nome":"Marcos Antonio Siqueira","empresa":"VSP - Vigilância e Segurança Patrimonial","resultado":"Promotor"},{"data":"2026-01-20","telefone":"5527988930504","nota":"😁 Ótima","motivo":"Apenas uma opinião pessoal","nome":"Evaldo Carlos Casagrande","empresa":"VSP - Vigilância e Segurança Patrimonial","resultado":"Promotor"},{"data":"2026-01-20","telefone":"5527992618096","nota":"😁 Ótima","motivo":"Muito bom mesmo","nome":"Divino Antonio De Oliveira","empresa":"VSP - Vigilância e Segurança Patrimonial","resultado":"Promotor"},{"data":"2026-01-20","telefone":"5527997591682","nota":"😁 Ótima","motivo":"Sua eficiência em nos atender assim que solicitado","nome":"Paulo Cezar Rangel Junior","empresa":"VSP - Vigilância e Segurança Patrimonial","resultado":"Promotor"},{"data":"2026-01-20","telefone":"5527999380458","nota":"🙂 Boa","motivo":"O app é bem objetivo e simples","nome":"Mauro Sergio De Matos Silva","empresa":"VSP - Vigilância e Segurança Patrimonial","resultado":"Promotor"},{"data":"2026-01-22","telefone":"5527999333040","nota":"😡 Péssima","motivo":"Pq é uma merda!","nome":"Ernesto Carlos Rabelo Souza","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Detrator"},{"data":"2026-01-22","telefone":"5527995830086","nota":"😁 Ótima","motivo":"Porque  o banco  tá bom","nome":"Aldaci Dos Santos Silva","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Promotor"},{"data":"2026-01-22","telefone":"5527999001804","nota":"😁 Ótima","motivo":"Toda vez que eu preciso de falar com você vocês me responda","nome":"Elizangela Do Nascimento Cerqueira","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Promotor"},{"data":"2026-01-22","telefone":"5527997789485","nota":"🙂 Boa","motivo":"Tudo ok","nome":"Geovana Nobre Goncalves Barcelos","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Promotor"},{"data":"2026-01-22","telefone":"5527998619092","nota":"🙂 Boa","motivo":"Facilidade em fazer transferência","nome":"Eliane Rodrigues Santos","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Promotor"},{"data":"2026-01-22","telefone":"5527999079292","nota":"🙂 Boa","motivo":"0 enprestimo. Mais poderia ser mais","nome":"Adriano Alves Da Silva","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Promotor"},{"data":"2026-01-22","telefone":"5527995738282","nota":"😁 Ótima","motivo":"Porque tá dando tudo certo quando eu movimento","nome":"Aparecida Vieira Prechedes","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Promotor"},{"data":"2026-01-22","telefone":"5527996464985","nota":"😡 Péssima","motivo":"Tudo","nome":"Emanoel De Jesus","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Detrator"},{"data":"2026-01-22","telefone":"5528999557618","nota":"🙂 Boa","motivo":"Aplicativo de fácil acesso","nome":"Catia Martins Da Silva","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Promotor"},{"data":"2026-01-22","telefone":"5527997633029","nota":"😁 Ótima","motivo":"Porque ele é bom e fácil de lidar","nome":"Cirlene Machado Ohnesorge","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Promotor"},{"data":"2026-01-22","telefone":"5527988167733","nota":"😁 Ótima","motivo":"É um ótimo aplicativo","nome":"Alexandre De Jesus","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Promotor"},{"data":"2026-01-22","telefone":"5527996166044","nota":"😁 Ótima","motivo":"Menos juros","nome":"Eliel De Senna Fernandes","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Promotor"},{"data":"2026-01-22","telefone":"5527999389257","nota":"🙂 Boa","motivo":"Achei bom","nome":"Erlei Alves De Jesus","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Promotor"},{"data":"2026-01-22","telefone":"5527988148120","nota":"😁 Ótima","motivo":"Por que eu gostei","nome":"Andressa Santos Ferreira","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Promotor"},{"data":"2026-01-22","telefone":"5527988004932","nota":"😁 Ótima","motivo":"Agilidade","nome":"Liliana Dos Santos","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Promotor"},{"data":"2026-01-22","telefone":"5527998579176","nota":"😁 Ótima","motivo":"Minha nota e que eu gostei muito fácil ecelente","nome":"Maria Dajuda Santos Da Silva","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Promotor"},{"data":"2026-01-22","telefone":"5527996525742","nota":"😁 Ótima","motivo":"Até agora não tenho o que reclama. Ta dentro do contexto","nome":"Jose Vericimo Alves De Farias","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Promotor"},{"data":"2026-01-22","telefone":"5527998605847","nota":"🙂 Boa","motivo":"A facilidade do aplicativo","nome":"Maiza Furtado De Araujo Vieira","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Promotor"},{"data":"2026-01-22","telefone":"5527999227972","nota":"🙂 Boa","motivo":"Falta o cartão magnético","nome":"Manuely De Oliveira","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Promotor"},{"data":"2026-01-22","telefone":"5527992348576","nota":"😁 Ótima","motivo":"O aplicativo funciona perfeitamente nunca travou estou satisfeito","nome":"Fabio Kiefer Furtado","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Promotor"},{"data":"2026-01-22","telefone":"5527995041243","nota":"😁 Ótima","motivo":"Porque deu tudo certo na abertura da conta isso é muito importante","nome":"Lucia De Fatima Dos Santos","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Promotor"},{"data":"2026-01-22","telefone":"5527997187933","nota":"🙂 Boa","motivo":"Por banco ser bom","nome":"Renilda Vicencia Mariana","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Promotor"},{"data":"2026-01-22","telefone":"5527992594913","nota":"🙂 Boa","motivo":"Nunca tive problema então por isso da minha nota","nome":"Fabiola Demo Lourenco","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Promotor"},{"data":"2026-01-22","telefone":"5527998700956","nota":"😁 Ótima","motivo":"Conta empresa","nome":"Jessica Dos Santos Correia Camargo","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Promotor"},{"data":"2026-01-22","telefone":"5527997937238","nota":"😁 Ótima","motivo":"O belo trabalho","nome":"Michel Andre Dias Barros","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Promotor"},{"data":"2026-01-22","telefone":"5527995044150","nota":"🙂 Boa","motivo":"Bom foi","nome":"Pablo Fernandes Canal","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Promotor"},{"data":"2026-01-22","telefone":"5527999086864","nota":"☹️ Ruim","motivo":"Não temos cartão, o cash back em benefícios pós ter feito empresto e adiantamento, não funciona, não tem interface que nos leve para o site de vantagens e que realmente consigamos ter a vantagem e etc.","nome":"Joao Antonio Dos Reis Bazellatto Barbosa","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Detrator"},{"data":"2026-01-22","telefone":"5527996864980","nota":"😁 Ótima","motivo":"Nos primeiros meses tive complicação, mas fui ajudada e deu tudo certo.","nome":"Rosangela Nunes Severiana","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Promotor"},{"data":"2026-01-22","telefone":"5527988949208","nota":"🙂 Regular","motivo":"Recebi um limite muito baixo de crédito só isso 😔","nome":"Viviane Alves Manoel","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Neutro"},{"data":"2026-01-22","telefone":"5527999509546","nota":"😁 Ótima","motivo":"Porque não tive problemas com o banco","nome":"Rosana Dettmann","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Promotor"},{"data":"2026-01-22","telefone":"5527988973681","nota":"😡 Péssima","motivo":"Uma bosta","nome":"Fabricio Martins Juvenal Alexandre","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Detrator"},{"data":"2026-01-22","telefone":"5527999007359","nota":"🙂 Regular","motivo":"Todo hora saii tem cadastrado tudo de novo","nome":"Valeria De Almeida Ferreira Santos","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Neutro"},{"data":"2026-01-22","telefone":"5527988040751","nota":"🙂 Regular","motivo":"Trabalho","nome":"Jose Luiz Santos De Souza","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Neutro"},{"data":"2026-01-22","telefone":"5527988396902","nota":"😁 Ótima","motivo":"Ótimo trabalho","nome":"Neuma Sueli Gonsaga Santos Fernandes","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Promotor"},{"data":"2026-01-22","telefone":"5522997214576","nota":"🙂 Boa","motivo":"Quando eu precisei resolver meu problema que eu tive na minha conta resolveu rápido","nome":"Suely Goncalves De Souza","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Promotor"},{"data":"2026-01-22","telefone":"5531995566807","nota":"😁 Ótima","motivo":"A empresa onde trabalho a líder limpe maravilhosa que nós indicou a abrir a conta","nome":"Rita Jaqueline Moreira","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Promotor"},{"data":"2026-01-22","telefone":"5527996990679","nota":"😁 Ótima","motivo":"10","nome":"Anderson Lopes De Siqueira","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Promotor"},{"data":"2026-01-22","telefone":"5527981299857","nota":"😁 Ótima","motivo":"Quando agente precisa vc na ajuda","nome":"Vanilton De Assis","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Promotor"},{"data":"2026-01-22","telefone":"5527997748260","nota":"😁 Ótima","motivo":"Um banco muito bom","nome":"Wanderly Nunes De Oliveira","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Promotor"},{"data":"2026-01-22","telefone":"5527997527697","nota":"🙂 Boa","motivo":"Pra mim tá bom sem poblema","nome":"Suelir Queiroz Do Nascimento","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Promotor"},{"data":"2026-01-22","telefone":"5531982599070","nota":"🙂 Regular","motivo":"Seus empréstimos são baixo e são altos os valores","nome":"Ana Paula De Freitas Gomes","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Neutro"},{"data":"2026-01-22","telefone":"5527999281043","nota":"🙂 Boa","motivo":"Eu estou usando a pouco tempo","nome":"Simaria Rodrigues Da Cunha Souza","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Promotor"},{"data":"2026-01-22","telefone":"5527999357267","nota":"🙂 Boa","motivo":"E por que não achei muito difícil de usar","nome":"Prisciliana Sena Da Silva","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Promotor"},{"data":"2026-01-22","telefone":"5527988779657","nota":"😁 Ótima","motivo":"Quando precisei de um empréstimo me atenderam muinticima bem","nome":"Dark Goncalves","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Promotor"},{"data":"2026-01-22","telefone":"5527998462182","nota":"☹️ Ruim","motivo":"Não consegui finalizar meu cadastro","nome":"Ana Clara Rodrigues Dos Reis","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Detrator"},{"data":"2026-01-22","telefone":"5527988483914","nota":"🙂 Boa","motivo":"Complicado","nome":"Luceni Conceicao Silva","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Promotor"},{"data":"2026-01-22","telefone":"5527997143244","nota":"🙂 Boa","motivo":"Empresa","nome":"Marilene Nascimento Ayres","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Promotor"},{"data":"2026-01-22","telefone":"5527992848312","nota":"😁 Ótima","motivo":"Eu acho muito válido a forma de recebimento de vocês","nome":"Vera Lucia Bastos Barbosa","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Promotor"},{"data":"2026-01-22","telefone":"5528999160105","nota":"😁 Ótima","motivo":"Já som cliente","nome":"Nelciane Pacheco Da Silva","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Promotor"},{"data":"2026-01-22","telefone":"5527988327357","nota":"😁 Ótima","motivo":"Atendimento rápido","nome":"Odete Ferreira","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Promotor"},{"data":"2026-01-22","telefone":"5527992831266","nota":"😁 Ótima","motivo":"Tudo conforme eu preciso","nome":"Zilene Dos Santos Araujo","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Promotor"},{"data":"2026-01-22","telefone":"5528999224555","nota":"☹️ Ruim","motivo":"Tô tendo problemas","nome":"Silas Alexandre Ribeiro","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Detrator"},{"data":"2026-01-22","telefone":"5527988498244","nota":"😁 Ótima","motivo":"Porque eu gostei desse banco muito bom","nome":"Neocionita Amaral Inacio","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Promotor"},{"data":"2026-01-22","telefone":"5527996950142","nota":"🙂 Regular","motivo":"Só falta um cartão 💳 pra melhorar","nome":"Julio Cesar Martins De Jesus","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Neutro"},{"data":"2026-01-22","telefone":"5527997543127","nota":"😁 Ótima","motivo":"Atendendimento excelente","nome":"Patricia Da Silva Guimaraes Merlo","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Promotor"},{"data":"2026-01-22","telefone":"5527998264727","nota":"😁 Ótima","motivo":"Sempre que preciso o banco sempre está a minha disposição atender.","nome":"Rafaela De Sousa Alves","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Promotor"},{"data":"2026-01-22","telefone":"5527999510589","nota":"😁 Ótima","motivo":"A qualidade dos serviços","nome":"Alexsandro Pereira De Melo","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Promotor"},{"data":"2026-01-22","telefone":"5527996407784","nota":"🙂 Regular","motivo":"Aquele empréstimo o juro muito alto","nome":"Selenir Soares","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Neutro"},{"data":"2026-01-22","telefone":"5527988815752","nota":"🙂 Boa","motivo":"O adiantamento de salário deveria ser dividido.\nOutra, não consigo o restante do empréstimo consignado de 48,90 😟😟","nome":"Rogerio Correia Ferreira","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Promotor"},{"data":"2026-01-22","telefone":"5527992819663","nota":"🙂 Boa","motivo":"👍🏾👍🏾👍🏾👍🏾👍🏾👍🏾","nome":"Julio Marcelino","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Promotor"},{"data":"2026-01-22","telefone":"5527998571040","nota":"😁 Ótima","motivo":"Por que o dinheiro cai na hora","nome":"Joelza Alves Dos Reis","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Promotor"},{"data":"2026-01-22","telefone":"5527996070618","nota":"🙂 Regular","motivo":"Só consegui fazer Pix de 600 em 600","nome":"Indiane Goncalves De Souza","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Neutro"},{"data":"2026-01-22","telefone":"5527997197145","nota":"🙂 Boa","motivo":"6","nome":"Karla Regina Guimaraes Peixoto","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Promotor"},{"data":"2026-01-22","telefone":"5527998622841","nota":"🙂 Regular","motivo":"Tem travado e não aceitado a senha uma vez suêi frio no caixa do supermercado às vezes fica uma cisma precisa de recurso técnico","nome":"Ana Maria Silva Brandao","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Neutro"},{"data":"2026-01-22","telefone":"5527997408970","nota":"😁 Ótima","motivo":"Afacilidade","nome":"Marloan Ramos Da Silva","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Promotor"},{"data":"2026-01-22","telefone":"5527992257777","nota":"🙂 Boa","motivo":"O bom atendimento","nome":"Phitre Luz","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Promotor"},{"data":"2026-01-22","telefone":"5527999755940","nota":"😁 Ótima","motivo":"Muito bom.","nome":"#N/A","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Promotor"},{"data":"2026-01-22","telefone":"5527988223593","nota":"😁 Ótima","motivo":"o atendimento é ótimo","nome":"Wanderleia Ferreira Corsini","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Promotor"},{"data":"2026-01-22","telefone":"5527988034908","nota":"😡 Péssima","motivo":"Pouco emprestimo","nome":"Rodrigo Grassi Andrade","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Detrator"},{"data":"2026-01-22","telefone":"5527995325538","nota":"😁 Ótima","motivo":"Fui bem atendida","nome":"Rosilene Ribeiro Teixeira","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Promotor"},{"data":"2026-01-23","telefone":"5527992843723","nota":"🙂 Regular","motivo":"Eu preciso faser transferência para um banco físico e não consigo","nome":"Eduardo Luiz Rodrigues","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Neutro"},{"data":"2026-01-23","telefone":"5527999413907","nota":"☹️ Ruim","motivo":"Porque nós damos direcionado para esse banco o nosso limite mudou muito de um banco para outro então não gostei","nome":"Beatriz Moreira Santos Rocha","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Detrator"},{"data":"2026-01-23","telefone":"5527996187517","nota":"🙂 Boa","motivo":"Boa","nome":"Sara Da Silva Brito","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Promotor"},{"data":"2026-01-23","telefone":"5587999543566","nota":"😁 Ótima","motivo":"Ótimo.","nome":"Edinaldo Oliveira De Lima","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Promotor"},{"data":"2026-01-23","telefone":"5527999539256","nota":"😡 Péssima","motivo":"Não tenho que falar só não gostei do banco, seria mais fácil se fosse um banco físico","nome":"Paula Cristina Farias De Castro","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Detrator"},{"data":"2026-01-23","telefone":"5527992510714","nota":"🙂 Boa","motivo":"As facilidade de mexer no aplicativo e problemas que eu tive com o primeiro acesso","nome":"Danilo Aranha Henrique","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Promotor"},{"data":"2026-01-23","telefone":"5527992777029","nota":"😁 Ótima","motivo":"Muito prático","nome":"Wilhans Pereira De Jesus","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Promotor"},{"data":"2026-01-23","telefone":"5561983590422","nota":"😁 Ótima","motivo":"Bom tem de resposta","nome":"Marcos Tayrrone De Oliveira Santana Costa","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Promotor"},{"data":"2026-01-23","telefone":"5527998100378","nota":"😁 Ótima","motivo":"10","nome":"Carlos Rocha Dos Santos","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Promotor"},{"data":"2026-01-23","telefone":"5527995996295","nota":"😁 Ótima","motivo":"Fácil atendimento eficaz.","nome":"Everton Vinicius Dias Dos Santos","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Promotor"},{"data":"2026-01-23","telefone":"5587996201577","nota":"😁 Ótima","motivo":"Nota 10","nome":"Ivanete Henrique Da Silva","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Promotor"},{"data":"2026-01-23","telefone":"5587988146612","nota":"😁 Ótima","motivo":"Muito bom","nome":"Lucineide De Souza Silva","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Promotor"},{"data":"2026-01-23","telefone":"5587988211525","nota":"😁 Ótima","motivo":"A rapidez e agilidade","nome":"Waltuiria Barboza Silva Rocha","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Promotor"},{"data":"2026-01-23","telefone":"5528999229171","nota":"😁 Ótima","motivo":"Tive atendimento imediato quando precisei de informações.","nome":"Ercilia Da Conceicao Torres Dos Santos","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Promotor"},{"data":"2026-01-23","telefone":"5527995054014","nota":"🙂 Boa","motivo":"Por enquanto tá bom","nome":"Lucas Couto E Leite","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Promotor"},{"data":"2026-01-23","telefone":"5527996879880","nota":"😁 Ótima","motivo":"Por que o aplicativo do Kesha Bank não me trouxesse nenhum trastorno e nenhum problema, achei o aplicativo muito bom de ser usado.","nome":"Tailany Lima Dos Santos Vieira Cruz","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Promotor"},{"data":"2026-01-23","telefone":"5527998772512","nota":"☹️ Ruim","motivo":"Aeroporto a opção de receber o código pelo watzapp","nome":"Queila De Jesus Santos","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Detrator"},{"data":"2026-01-23","telefone":"5527997838967","nota":"🙂 Boa","motivo":"Empresarial.","nome":"Maria Nilza Nascimento Santos","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Promotor"},{"data":"2026-01-23","telefone":"5527999050209","nota":"😁 Ótima","motivo":"App simples de mecher sem dificuldade 👍🏼👍🏼","nome":"Eduardo Mesquita De Melo","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Promotor"},{"data":"2026-01-25","telefone":"5527995703353","nota":"☹️ Ruim","motivo":"Não estou conseguindo acessar o aplicativo","nome":"Christina Silva De Souza Santos","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Detrator"},{"data":"2026-02-11","telefone":"5527998338433","nota":"😁 Ótima","motivo":"Nota 10","nome":"Gustavo Ferreira Soares","empresa":"Multisserviços","resultado":"Promotor"},{"data":"2026-02-11","telefone":"5527995812934","nota":"😁 Ótima","motivo":"Ótimo atendimento e o app não trava e tem tudo oque eu preciso","nome":"Ana Laura Gomes De Oliveira","empresa":"Multisserviços","resultado":"Promotor"},{"data":"2026-02-11","telefone":"5527998720502","nota":"😁 Ótima","motivo":"Facilidade e acessibilidade","nome":"Fernando Dos Santos Falcao","empresa":"Multisserviços","resultado":"Promotor"},{"data":"2026-02-11","telefone":"5527997928926","nota":"😁 Ótima","motivo":"Otima","nome":"Luciana Rosario Da Hora","empresa":"Multisserviços","resultado":"Promotor"},{"data":"2026-02-11","telefone":"5527997293967","nota":"😁 Ótima","motivo":"Rapidez e clareza no serviço oferecido Ok.","nome":"Evanderson Pinheiro Pires","empresa":"Multisserviços","resultado":"Promotor"},{"data":"2026-02-11","telefone":"5527996558128","nota":"😁 Ótima","motivo":"Nada a declarar para mim está tudo ótimo","nome":"Renato De Jesus Costa","empresa":"Multisserviços","resultado":"Promotor"},{"data":"2026-02-11","telefone":"5527999844348","nota":"😡 Péssima","motivo":"Cartao de credito não oferece","nome":"Diego De Matos Dantas Loiola","empresa":"Multisserviços","resultado":"Detrator"},{"data":"2026-02-11","telefone":"5527999136103","nota":"🙂 Regular","motivo":"Muito lento pra iniciar","nome":"Marcos Dos Santos","empresa":"Multisserviços","resultado":"Neutro"},{"data":"2026-02-11","telefone":"5527992348035","nota":"😁 Ótima","motivo":"Tive uma dificuldade  no começo,  mas agora estou sabendo ter acesso muito bem","nome":"Creonice Lima Oliveira","empresa":"Multisserviços","resultado":"Promotor"},{"data":"2026-02-11","telefone":"5527998855665","nota":"😁 Ótima","motivo":"9","nome":"Marcelo Faria De Santana","empresa":"Multisserviços","resultado":"Promotor"},{"data":"2026-02-11","telefone":"5527996506364","nota":"😁 Ótima","motivo":"Estou tendo muita facilidade em ter acesso a vc  muito bem, obrigado","nome":"Maria Domingas Dos Santos","empresa":"Multisserviços","resultado":"Promotor"},{"data":"2026-02-11","telefone":"5527988679528","nota":"🙂 Regular","motivo":"Por não dividir o valor do empréstimo","nome":"Irlandia Ribeiro De Souza","empresa":"Multisserviços","resultado":"Neutro"},{"data":"2026-02-11","telefone":"5527997136839","nota":"😁 Ótima","motivo":"Mais prático","nome":"Marcilene Souza Silva","empresa":"Multisserviços","resultado":"Promotor"},{"data":"2026-02-11","telefone":"5527999367127","nota":"🙂 Boa","motivo":"A empresa","nome":"Eliane Ventura","empresa":"Multisserviços","resultado":"Promotor"},{"data":"2026-02-11","telefone":"5527995704527","nota":"🙂 Boa","motivo":"Atendeu bem as minhas espectativas","nome":"Shirly Aparecida Santanna Lafaete","empresa":"Multisserviços","resultado":"Promotor"},{"data":"2026-02-11","telefone":"5527997296569","nota":"🙂 Regular","motivo":"Porque não tem tato tempo nesse baco","nome":"Nilson Silva De Jesus","empresa":"Multisserviços","resultado":"Neutro"},{"data":"2026-02-11","telefone":"5527999809901","nota":"😁 Ótima","motivo":"Sem atraso e o crédito","nome":"Alessandro Castelani Dos Santos Azevedo","empresa":"Multisserviços","resultado":"Promotor"},{"data":"2026-02-11","telefone":"5527998268150","nota":"🙂 Regular","motivo":"Porque o limite que vocês dão é muito pouco","nome":"Alane Da Hora De Jesus","empresa":"Multisserviços","resultado":"Neutro"},{"data":"2026-02-12","telefone":"5527998199418","nota":"🙂 Regular","motivo":"Gostaria que meu salário fosse enviado direto p o meu Pix","nome":"Maristela Medeiro Silva","empresa":"Multisserviços","resultado":"Neutro"},{"data":"2026-02-12","telefone":"5527998174074","nota":"🙂 Boa","motivo":"A segurança sobre os dados.","nome":"Dalva Barboza De Moraes","empresa":"Multisserviços","resultado":"Promotor"},{"data":"2026-02-24","telefone":"5527997732690","nota":"😁 Ótima","motivo":"E muito bom 10 dez","nome":"Claudiane Maia De Carvalho Dos Santos","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-24","telefone":"5527996301342","nota":"🙂 Boa","motivo":"O atendimento","nome":"Virginia Demissiana Da Silva","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-24","telefone":"5588998425244","nota":"🙂 Boa","motivo":"Boa","nome":"Rosemary De Oliveira Barbosa","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-24","telefone":"5527995080736","nota":"🙂 Boa","motivo":"Ipredimo","nome":"Welington Pereira De Jesus","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-24","telefone":"5527992522043","nota":"🙂 Boa","motivo":"Legal","nome":"Thalles Henrique Alvarenga Tostes","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-24","telefone":"5527998149996","nota":"☹️ Ruim","motivo":"O app e horrível pra mexer ou transferir","nome":"Roseana Albano De Melo Motta","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Detrator"},{"data":"2026-02-24","telefone":"5527996086932","nota":"🙂 Boa","motivo":"Receber pagamento","nome":"Valeria Oliveira Meira","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-24","telefone":"5527995274286","nota":"😁 Ótima","motivo":"Banco muinto bomm","nome":"Rosilene Da Silva Santos","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-24","telefone":"5527999251130","nota":"🙂 Boa","motivo":"O atendimento meu anjo tá","nome":"Werika Ramos Dos Santos Eduardo","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527996724100","nota":"🙂 Boa","motivo":"A empresa onde trabalhou","nome":"Juliete Vieira Dos Santos","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527992032777","nota":"😁 Ótima","motivo":"Bom","nome":"Mirian Ferreira Dos Santos","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527999036385","nota":"😁 Ótima","motivo":"E u banco ótimo","nome":"#N/A","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527988223102","nota":"🙂 Boa","motivo":"Poderia melhorar na questão di pix so consigo fazer transferência de 1000 em 1000   mais ta bom","nome":"Kissila Crystina Fernandes Paulo","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5561992922801","nota":"😁 Ótima","motivo":"Nota 10","nome":"Maria De Lourdes Mascarenhas De Almeida","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527996167646","nota":"😁 Ótima","motivo":"sempre que agente precisa vcs nos ajudar.","nome":"Maria Das Gracas Feitoza De Lima","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527997830387","nota":"😡 Péssima","motivo":"Não consigo acessar","nome":"Kelly Cristina De Azevedo Santos","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Detrator"},{"data":"2026-02-25","telefone":"5527997505439","nota":"😡 Péssima","motivo":"Meu salário tem que ser sacado de 2 vezes...e precisei de um empréstimo de 300 para descontar 400 ok, foi descontado mais 517 o valor  a mais...e não recebi o estorno já que foi um erro do banco.","nome":"Mirtes Pardinho Alves Barreira","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Detrator"},{"data":"2026-02-25","telefone":"5527997945868","nota":"🙂 Boa","motivo":"Funcionalidade simples e prático..","nome":"Matheus Rocha Franca","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527998772271","nota":"😁 Ótima","motivo":"Ótimo","nome":"Lucia Helena Da Silva Luduvico","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527997446297","nota":"🙂 Boa","motivo":"Olá bom","nome":"Alzimara Tavares Lirio","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527995137608","nota":"🙂 Boa","motivo":"Pq consigo fazer minhas transferências com tranquilidade","nome":"Adriana Dos Santos Cardoso","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5561998744214","nota":"😁 Ótima","motivo":"Muito ótimo","nome":"Mauricio Henrique Farias Da Silva","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527992840687","nota":"😁 Ótima","motivo":"Bom dia ótimo","nome":"Luciana Rosa Ferreira Pereira","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5561986670203","nota":"😁 Ótima","motivo":"Verdadeiro","nome":"Ana Lucia Da Silva","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527997660547","nota":"😁 Ótima","motivo":"Porque vc sabe responder \nnós muito bem graças a Deus","nome":"Andressa Ribeiro Lima","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527996451169","nota":"🙂 Regular","motivo":"Ainda não tenho outra para dar , pois ainda não usei","nome":"Luciana Conceicao Da Silva","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Neutro"},{"data":"2026-02-25","telefone":"5527988489915","nota":"😁 Ótima","motivo":"poq gostei","nome":"Argelia Santana Lirio Santos","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527996868276","nota":"😁 Ótima","motivo":"Muito bom rapidez o atendimento no momento que agente precisa obrigada","nome":"Maria Helena Alves","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527995270374","nota":"😁 Ótima","motivo":"Muito bom","nome":"Joelma Rodrigues Moreira Fonseca","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527988626531","nota":"🙂 Boa","motivo":"Não tive problemas ,até agora !","nome":"Jhennifer Assuncao Da Silva Conceicao","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527999613757","nota":"😁 Ótima","motivo":"Empréstimo","nome":"Rosangela Aparecida Da Silva","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527988649300","nota":"😡 Péssima","motivo":"Tá péssima vcs bloquear o dinheiro da gente agente só pode tirar 1000 reais de cada vezes","nome":"Lucimar Felisdoro","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Detrator"},{"data":"2026-02-25","telefone":"5527995826700","nota":"😁 Ótima","motivo":"Gostei do banco","nome":"Marcia Nascimento De Souza Borges","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527992624735","nota":"🙂 Boa","motivo":"O motivo e que até agora não tive dificuldade e meu pagamento cai certinho","nome":"Marli Felis Da Silva","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527999253737","nota":"😁 Ótima","motivo":"10","nome":"Alexsandra De Oliveira","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527988462221","nota":"🙂 Boa","motivo":"Emprego conta salarial","nome":"Bruna Fernandes Vieira","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527999762094","nota":"😁 Ótima","motivo":"Empresa","nome":"Ana Maria De Jesus Da Silva Carvalho","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527995760147","nota":"🙂 Boa","motivo":"Eu acho q pode melhorar um pouco","nome":"Edilaine Silva Delfino","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527998568181","nota":"😁 Ótima","motivo":"Esse banco e muito bom nota 10","nome":"Eliana Vieira Bertoldo","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527999243718","nota":"😁 Ótima","motivo":"Muito bom  ótimo  bom dia","nome":"Edissandra De Oliveira","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527995320183","nota":"😁 Ótima","motivo":"10","nome":"Gessica Dos Santos Da Hora","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527998820320","nota":"😁 Ótima","motivo":"Acesso à resolução de pendências, atendimento excelente","nome":"Dolores Guidoni Oliveira","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527988618082","nota":"😁 Ótima","motivo":"Bom atendimento","nome":"Kele Cristina De Oliveira Ferreira","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527988463674","nota":"🙂 Boa","motivo":"Atendimento rápido quando eu precisei","nome":"Kiara Barcelos De Abreu","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527997423859","nota":"🙂 Boa","motivo":"Poderia ser melhor ainda! Aumentar o limite, diminuir os juros","nome":"Brunella De Azevedo","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527998338433","nota":"😁 Ótima","motivo":"Nota 10","nome":"Gustavo Ferreira Soares","empresa":"Multisserviços","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527997560657","nota":"🙂 Boa","motivo":"Pq gostei","nome":"Ivani Ribeiro Rocha Barcellos","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5528999182870","nota":"😁 Ótima","motivo":"Fui bem atendida","nome":"Ana Lucia Vial","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527988951120","nota":"😁 Ótima","motivo":"Ótimo atendimento nada a fala","nome":"Luzilena Nascimento Souza","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527988272406","nota":"🙂 Regular","motivo":"Virtual","nome":"Maria Socorro Dos Santos","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Neutro"},{"data":"2026-02-25","telefone":"5527992464110","nota":"😁 Ótima","motivo":"Credibilidade","nome":"Meire Onam Pacheco","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527996188447","nota":"🙂 Regular","motivo":"Porque e virtual","nome":"Karla Nogueira De Oliveira","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Neutro"},{"data":"2026-02-25","telefone":"5527998752476","nota":"😁 Ótima","motivo":"Rapidez no atendimento","nome":"Marlene Santos Da Vitoria","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527997611682","nota":"😁 Ótima","motivo":"Rapidez e fácil de mexer","nome":"Alessandra Souza Contadini","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5528999305616","nota":"😁 Ótima","motivo":"Tem me Ajudado muito nas horas difíceis Top demais.","nome":"Zelina Goncalves Oliveira","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527996583740","nota":"😁 Ótima","motivo":"Bom atendimento","nome":"Rosiane De Oliveira Gums","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527997544322","nota":"😁 Ótima","motivo":"Eu mesmo","nome":"Thais Soares Dos Santos","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527992520934","nota":"🙂 Regular","motivo":"O banco é bom mais o limite do impresimo é muito pouco","nome":"Jacilene Pereira De Andrade","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Neutro"},{"data":"2026-02-25","telefone":"5527999272986","nota":"😁 Ótima","motivo":"Vejo como é no dia","nome":"Ivanise Pereira Tobias","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527992847039","nota":"😁 Ótima","motivo":"Conta","nome":"Maria Luiza Rocha","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527999913485","nota":"😁 Ótima","motivo":"O atendimento  rápido  e eficaz","nome":"Arlete Cavalcante De Almeida","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527992542236","nota":"😁 Ótima","motivo":"O atendimento","nome":"Taiany Nunes Vieira","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527999166197","nota":"🙂 Regular","motivo":"Sobre o empréstimo que fazemos e pagamos o total com 30 dias poderia ter mais prazo ou dividir","nome":"Janeik Nascimento De Sousa Vieira","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Neutro"},{"data":"2026-02-25","telefone":"5527996386076","nota":"😁 Ótima","motivo":"Nunca tive nenhum problema com o aplicativo, então não teria como ser outra nota 😁","nome":"Isabel De Jesus Reis","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527988675704","nota":"😁 Ótima","motivo":"Pelo atendimento","nome":"Elizabeth Soares Loureiro","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5575982810131","nota":"😡 Péssima","motivo":"Não tô tendo a seco ao aplicativo","nome":"Adenildes Oliveira De Lima","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Detrator"},{"data":"2026-02-25","telefone":"5527988542594","nota":"😁 Ótima","motivo":"Atendimento rápido","nome":"Nildete Peres Dos Santos","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527995229922","nota":"🙂 Regular","motivo":"O fato de quando  se errarmos ou demora pra acessar a senha o aplicativo  trava e se for numa sexta feira depois das 17 hrs piorou a gente fica sem acessar o pagamento","nome":"Lauriene Souza Do Nascimento","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Neutro"},{"data":"2026-02-25","telefone":"5527997877513","nota":"😁 Ótima","motivo":"E muito fácil de usar","nome":"Ana Paula Lourenco Vieira Dos Anjos","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527988495980","nota":"😁 Ótima","motivo":"Ótima","nome":"Aguimar Falcao","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527996596664","nota":"🙂 Boa","motivo":"Estou gostando do banco","nome":"Sulamar Lima De Araujo Cunha","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527992258629","nota":"☹️ Ruim","motivo":"Porque é muito difícil as transações","nome":"Ana Ferreira Da Silva","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Detrator"},{"data":"2026-02-25","telefone":"5527992925066","nota":"😁 Ótima","motivo":"Nunca tive problema com o banco","nome":"Luana Montenegro Moledo","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527998021421","nota":"🙂 Boa","motivo":"A atenção","nome":"Ordalia Oliveira Da Vitoria","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527988812599","nota":"😁 Ótima","motivo":"","nome":"Claudeci Laercio Da Silva","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527998945780","nota":"😁 Ótima","motivo":"Eu estou querendo um empréstimo","nome":"Florentina Azevedo De Souza Santos","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527988562201","nota":"😁 Ótima","motivo":"Foi muito bom enquanto durou","nome":"Naiara Francisca Do Ouro","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527998029705","nota":"😁 Ótima","motivo":"Um bom atendimento resposta rápida e uma linha de crédito favorável que ajuda a pagar as contas","nome":"Julio Fernandes De Passos","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527988302331","nota":"🙂 Boa","motivo":"10","nome":"Adriana Carlos Batista","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527997600709","nota":"😁 Ótima","motivo":"Nunca tive problemas com o banco","nome":"Edna Da Rocha Caetano Dos Santos","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527997209512","nota":"🙂 Regular","motivo":"Porque o empréstimo é descontado de uma vez só","nome":"Maria Cristina Augusto Da Silva Amorim","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Neutro"},{"data":"2026-02-25","telefone":"5527997509506","nota":"😁 Ótima","motivo":"E um banco muito bom","nome":"Maria Da Penha Cominoti","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527999801738","nota":"😁 Ótima","motivo":"Sempre peço ajuda atende.bem","nome":"Josiane Da Penha Soares","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527996212107","nota":"🙂 Boa","motivo":"Foi boa a experiência mais nada","nome":"Edna Ribeiro Peixoto Perovano","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527996113201","nota":"🙂 Boa","motivo":"Estou me adaptando","nome":"Rosimery Mattos De Almeida","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527999990660","nota":"😁 Ótima","motivo":"Eu receber meu pagamento sem problemas tds os meses . E ter um crédito que me socorreu qd eu necessitei . 🙋🏽‍♀️❤️😘👍🏽","nome":"Simone Rocha Batista Sausmickt","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527988699759","nota":"😁 Ótima","motivo":"Preciso de um dinheiro","nome":"Eliane Silva De Oliveira","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527997359695","nota":"🙂 Regular","motivo":"Quase não interajo com o banco.","nome":"Ana Cristina De Oliveira","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Neutro"},{"data":"2026-02-25","telefone":"5527995828844","nota":"😁 Ótima","motivo":"Atendeu ao meu pedido","nome":"Samella Goncalves De Oliveira","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5561992311161","nota":"😁 Ótima","motivo":"É uma empresa que deu o suporte na hora que precisamos.","nome":"Lucinalva Freitas Barbosa Dos Santos","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527998356481","nota":"🙂 Boa","motivo":"Para ficar melhor poderia diminuir os juros","nome":"Altamira Vieira Goncalves","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527988048067","nota":"😁 Ótima","motivo":"Porque eu não tive problemas nenhum  ótimo atendimento","nome":"Sonia Maria De Souza Collaca","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527997500462","nota":"🙂 Regular","motivo":"Os juros tá muito alto e vcs descontar em uma vez tinha que ser em duas vezes","nome":"Nelcira Rocha Trancoso Dos Santos","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Neutro"},{"data":"2026-02-25","telefone":"5527988972941","nota":"☹️ Ruim","motivo":"Poderia melhorar, reduzir taxas muitos altas","nome":"Rianh Carlos Pereira Lisboa Santos","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Detrator"},{"data":"2026-02-25","telefone":"5527996944485","nota":"🙂 Boa","motivo":"Sem problema","nome":"Iracema Batista Gomes","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527981232101","nota":"😁 Ótima","motivo":"Agilidade e prático","nome":"Graziane Marques Dutra Santana","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527988294915","nota":"😁 Ótima","motivo":"Liberação de crédito","nome":"Marcela Eduarda Montenegro Moledo","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527988602699","nota":"😁 Ótima","motivo":"Muito bom obrigado","nome":"Alessandra Correia Siqueira","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527995813294","nota":"😁 Ótima","motivo":"Nunca me deu problemas entao fico satisfeito","nome":"Mesaque Oliveira Dos Santos","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527997473726","nota":"😁 Ótima","motivo":"10","nome":"Aline Silva Souza","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527992648783","nota":"😁 Ótima","motivo":"Muito fácil prático","nome":"Cleia Pereira Lopes","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527998336654","nota":"🙂 Boa","motivo":"O atendimento","nome":"Irleyde Da Vitoria Monteiro","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5528999283275","nota":"☹️ Ruim","motivo":"Pq é ruim","nome":"Tatiana Correia De Oliveira","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Detrator"},{"data":"2026-02-25","telefone":"5527992455278","nota":"😁 Ótima","motivo":"Porque ja movements essa conta muito boa","nome":"Marlice Coutinho De Oliveira Correia","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527997470497","nota":"😡 Péssima","motivo":"O banco dá um limite para gente o juros do limite do desconto é muito alto para como é descontado de vez","nome":"Monica Cabral Da Silva","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Detrator"},{"data":"2026-02-25","telefone":"5527999942758","nota":"😁 Ótima","motivo":"Porque vcs resolve as situações com rápido","nome":"Ana Alice Gomes Dos Santos","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527996969591","nota":"😁 Ótima","motivo":"Mt atenciosos, enquanto não resolve o problema não param de mantém contato com a gente","nome":"Ines De Oliveira Reis","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527997933460","nota":"😁 Ótima","motivo":"a praticidade","nome":"Neide Aparecida Samuel","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527988550673","nota":"😁 Ótima","motivo":"O atendimento é bom","nome":"Valdiele Ferreira","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527981185438","nota":"😁 Ótima","motivo":"Prestação de serviços bom 👍","nome":"Ruth Helena Carvalho Bastos","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527999336497","nota":"😁 Ótima","motivo":"Excelência","nome":"Flavia Silva Vicente","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527992994764","nota":"😁 Ótima","motivo":"Nao tenho nada a falar so gostei do banco","nome":"Hellen Rose Dos Santos","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527996213726","nota":"😁 Ótima","motivo":"O atendimento","nome":"Tatiane Sabino Da Conceicao","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527988325737","nota":"🙂 Boa","motivo":"Sempre responde minhas mensagens","nome":"Alessandra Cardoso Dos Santos","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527997014303","nota":"😁 Ótima","motivo":"Foi obrigada trabalhar com vcs","nome":"Rosa Simoes Da Silva","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527996936869","nota":"😁 Ótima","motivo":"Eles são muito bons mesmo","nome":"Jurcileia Cruz Vieira","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527997239153","nota":"🙂 Boa","motivo":"Agilidade no atendimento","nome":"Bruno Cavalcanti Da Silva","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527998387482","nota":"🙂 Regular","motivo":"Acho que o limite deveria ser maior","nome":"Iara De Jesus Oliveira","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Neutro"},{"data":"2026-02-25","telefone":"5527996102855","nota":"🙂 Boa","motivo":"Nunca me deixou na mão sempre certo","nome":"Raquel Alves Santos","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527992669851","nota":"😁 Ótima","motivo":"O bom atendimento","nome":"Mauricio De Souza Oliveira","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527999038348","nota":"😁 Ótima","motivo":"Porque quero enter porque chegou está mensagem pra mim","nome":"Maria Cristina De Jesus Lopes","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527995265634","nota":"😁 Ótima","motivo":"TD","nome":"Katia Claudio Barbosa","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527996540322","nota":"😁 Ótima","motivo":"A empresa q trabalho q abriu a conta.","nome":"Sandra Regina Silva","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527998445638","nota":"😁 Ótima","motivo":"Não sei explicar mais tá muito bom","nome":"#N/A","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527999205862","nota":"😁 Ótima","motivo":"Um bom trabalho","nome":"Petherson De Oliveira Gomes","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527999701218","nota":"😁 Ótima","motivo":"Pela faço de pagamento e transferência.muito praticidade.","nome":"Marilene Batista Das Neves","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5528999749658","nota":"😁 Ótima","motivo":"Consigo fazer transferência e pix com muita facilidade.","nome":"#N/A","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527999180471","nota":"😁 Ótima","motivo":"Gosto da forma que o banco trabalha","nome":"Marivania Bento Fonseca Loureiro","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527989000456","nota":"😁 Ótima","motivo":"Porque eu acho bom o serviço","nome":"Romilda Nunes Candeia","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527999212770","nota":"🙂 Boa","motivo":"Comese Iza agora e não colherso muito bem","nome":"Suziane Da Penha Correa Da Silva","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527988257452","nota":"😁 Ótima","motivo":"Ótimo atendimento","nome":"Jocimara Rodrigues Mota","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527999035111","nota":"🙂 Regular","motivo":"","nome":"Dionisio Pereira Da Silva","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Neutro"},{"data":"2026-02-25","telefone":"5527997870504","nota":"😁 Ótima","motivo":"Sem complicações","nome":"Maria Do Carmo Marques Da Silva","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527988764784","nota":"😡 Péssima","motivo":"","nome":"Harilton Rosa Da Silva","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Detrator"},{"data":"2026-02-25","telefone":"5527999125068","nota":"😡 Péssima","motivo":"Nem recebi meu cartão","nome":"Fabricia De Souza Pereira","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Detrator"},{"data":"2026-02-25","telefone":"5527988816251","nota":"😁 Ótima","motivo":"Eu não tenho nada a reclamar de Banco","nome":"Katia Regina Rosa","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-25","telefone":"5527997607107","nota":"😁 Ótima","motivo":"Atendimento foi rápido","nome":"Ingrid Jesus De Oliveira","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-26","telefone":"5527997597290","nota":"🙂 Regular","motivo":"Quando vcs são credito nao parcela e quando estamos devendo qualquer dinheiro que cai vcs pegam \nNao entendi pq me deram 265 de credito e quando peguei o banco pegou na hora ou seja eu nem consegui pegar o empréstimo","nome":"Flavia Goncalves Da Cruz","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Neutro"},{"data":"2026-02-26","telefone":"5527998217470","nota":"😁 Ótima","motivo":"Quero continuar com banco","nome":"Clemilda Augusta Fauster","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-27","telefone":"5527988240622","nota":"🙂 Regular","motivo":"Opção de cartao","nome":"Lenyegles Amaral Dos Santos","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Neutro"},{"data":"2026-02-27","telefone":"5561995793198","nota":"😁 Ótima","motivo":"Benefícios bom","nome":"Andre Augusto Dos Santos","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-28","telefone":"5527988782029","nota":"😁 Ótima","motivo":"Bom dia!","nome":"Crispiniana Gomes De Souza","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-28","telefone":"5527997440916","nota":"😡 Péssima","motivo":"","nome":"Sandra Helena Do Nascimento","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Detrator"},{"data":"2026-02-28","telefone":"5527997068397","nota":"🙂 Boa","motivo":"Sempre pego o empréstimo  fácil","nome":"Maria Aparecida Gomes Borges","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-28","telefone":"5527992971110","nota":"🙂 Boa","motivo":"Porque e bom","nome":"Adriana Dias Da Silva","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-28","telefone":"5527992385043","nota":"😁 Ótima","motivo":"Simplesmente para mim, não tenho o que reclamar","nome":"Marcia Andrea Rosa Viana","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-02-28","telefone":"5527995122557","nota":"🙂 Boa","motivo":"Boa tarde","nome":"Gleyciana Alves Setimo","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-03-18","telefone":"5554999052105","nota":"😡 Péssima","motivo":"Faz mais de um mês que estou aguardando estender meu limite de transferências e até agora nada","nome":"Nathalia Morais Welter","empresa":"João Domingos Advogados","resultado":"Detrator"},{"data":"2026-03-18","telefone":"5562994751571","nota":"🙂 Boa","motivo":"A empresa mudou de banco","nome":"Fabricio Bezerra Silva","empresa":"MRA - Martins Ribeiro ADM","resultado":"Promotor"},{"data":"2026-03-18","telefone":"5562991795512","nota":"🙂 Boa","motivo":"Boa agilidade","nome":"Danilo Gomes Branquinho Tavares","empresa":"MRA - Martins Ribeiro ADM","resultado":"Promotor"},{"data":"2026-03-18","telefone":"5511949599129","nota":"😁 Ótima","motivo":"App prático, um bom suporte e muitos benefícios para os usuários","nome":"Thaylan Angel Real Da Silva","empresa":"Help Soluções","resultado":"Promotor"},{"data":"2026-03-18","telefone":"5562991486304","nota":"🙂 Boa","motivo":"Falta cartão físico","nome":"Mayra Da Cruz Amorim","empresa":"MRA - Martins Ribeiro ADM","resultado":"Promotor"},{"data":"2026-03-18","telefone":"5562992481555","nota":"🙂 Regular","motivo":"O App não é intuitivo, tem falhas que precisam ser sanadas.","nome":"Rubem Rodrigo Da Silva Lima","empresa":"MRA - Martins Ribeiro ADM","resultado":"Neutro"},{"data":"2026-03-25","telefone":"5527997727978","nota":"🙂 Boa","motivo":"Vocês são dez","nome":"Carmelio Meira Vandelino","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-03-26","telefone":"5527997400638","nota":"😁 Ótima","motivo":"Como é fácil e prático mexer e ser atualizado pela kesh Bank","nome":"Claudiomiro Pereira De Araujo","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-04-22","telefone":"5527999539256","nota":"😡 Péssima","motivo":"Ela vai de mal pra pior","nome":"Paula Cristina Farias De Castro","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Detrator"},{"data":"2026-04-22","telefone":"5511978335579","nota":"☹️ Ruim","motivo":"A conta não tem cartão \nNão tem possibilidade de empréstimo","nome":"Luciana Santana De Oliveira Barbosa","empresa":"LGA - Aço Forte","resultado":"Detrator"},{"data":"2026-04-22","telefone":"5511949609151","nota":"🙂 Regular","motivo":"Não tenho emprestimos,falta Cartão físico \nE até agora não avaliarão a minha conta empresa","nome":"Gilson Oliveira Do Nascimento","empresa":"LGA - Aço Forte","resultado":"Neutro"},{"data":"2026-04-22","telefone":"5527999413907","nota":"🙂 Regular","motivo":"Nossa porque além de vc demorar para liberar o dinheiro libera um valor pouco","nome":"Beatriz Moreira Santos Rocha","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Neutro"},{"data":"2026-04-22","telefone":"5527999086864","nota":"🙂 Regular","motivo":"Conta com poucos recursos, não temos um cartão, nem de débito, nem virtual, crédito...\nNão temos um programa de investimento. Apenas o \"Cash back\" do empréstimo, que na verdade é um adiantamento de salário/cheque especial, com juros super alto.\nE também não conseguimos fazer portabilidade. Entre outros...","nome":"Joao Antonio Dos Reis Bazellatto Barbosa","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Neutro"},{"data":"2026-04-23","telefone":"5531975961846","nota":"🙂 Regular","motivo":"Não tem assistência aos fins de semana e não tem cartão físico para pagamentos","nome":"Jeferson Barbosa Da Silva","empresa":"Engevidros - Santana Industria e Comercio de vidros","resultado":"Neutro"},{"data":"2026-04-22","telefone":"5583986588812","nota":"🙂 Boa","motivo":"Assistência na hora do aperto","nome":"Paulo Roberto Da Silva","empresa":"Brasifort Segurança Eletronica","resultado":"Promotor"},{"data":"2026-04-22","telefone":"5527998622841","nota":"🙂 Boa","motivo":"Normal nem pra mais nem pra menos","nome":"Ana Maria Silva Brandao","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Promotor"},{"data":"2026-04-23","telefone":"5511963894591","nota":"🙂 Boa","motivo":"Empresa que pediu","nome":"Solange Aparecida Pereira","empresa":"Cia De Moda - Valeria Aparecida Colpani Zelazny","resultado":"Promotor"},{"data":"2026-04-22","telefone":"5583991390737","nota":"😁 Ótima","motivo":"Meio de empréstimo","nome":"Ademir De Franca Nascimento","empresa":"Brasifort Segurança Eletronica","resultado":"Promotor"},{"data":"2026-04-22","telefone":"5534998010181","nota":"😁 Ótima","motivo":"Está Otimo","nome":"Jorge Evangelista De Souza","empresa":"Alysson Construção Civil","resultado":"Promotor"},{"data":"2026-04-22","telefone":"5531983060623","nota":"😁 Ótima","motivo":"Atendimentos rápido","nome":"Paulo Henrique Gomes","empresa":"FCA Engenharia","resultado":"Promotor"},{"data":"2026-04-22","telefone":"5583988346206","nota":"😁 Ótima","motivo":"A facilidade com a empresa em que trabalho","nome":"Franciedson Araujo Almeida","empresa":"Brasifort Segurança Eletronica","resultado":"Promotor"},{"data":"2026-04-22","telefone":"5583988540811","nota":"😁 Ótima","motivo":"agilidade no atendimento","nome":"Lidiana Silva Farias","empresa":"Brasifort Segurança Eletronica","resultado":"Promotor"},{"data":"2026-04-23","telefone":"5583999120142","nota":"😁 Ótima","motivo":"Atendimento excelente","nome":"Edson Carlos Farias De Lima","empresa":"Brasifort Segurança Eletronica","resultado":"Promotor"},{"data":"2026-04-23","telefone":"5527996070618","nota":"😁 Ótima","motivo":"Não tô tendo problema então tá ótimo","nome":"Indiane Goncalves De Souza","empresa":"Lider Limpe Limpeza Comercial Ltda","resultado":"Promotor"},{"data":"2026-05-21","telefone":"5527998387482","nota":"🙂 Regular","motivo":"Normal.\nMas acho que poderia aumentar o limite e da opção de dividir","nome":"Iara De Jesus Oliveira","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Neutro"},{"data":"2026-05-21","telefone":"5527999627654","nota":"🙂 Boa","motivo":"Ok","nome":"Vanderson Alves Stein","empresa":"Agrovix Serviços Ambientais Ltda","resultado":"Promotor"},{"data":"2026-05-21","telefone":"5527988272406","nota":"🙂 Regular","motivo":"Por não ser um banco físico","nome":"Maria Socorro Dos Santos","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Neutro"},{"data":"2026-05-21","telefone":"5527999136868","nota":"🙂 Boa","motivo":"Praticidade objetivo","nome":"Edson Da Costa Oliveira","empresa":"Agrovix Serviços Ambientais Ltda","resultado":"Promotor"},{"data":"2026-05-21","telefone":"5527998212078","nota":"😁 Ótima","motivo":"10","nome":"Almir Pereira Portela","empresa":"Agrovix Serviços Ambientais Ltda","resultado":"Promotor"},{"data":"2026-05-21","telefone":"5527997925303","nota":"☹️ Ruim","motivo":"Meu limite de crédito não aumenta","nome":"Ludimila Aurelio Da Silva","empresa":"Agrovix Serviços Ambientais Ltda","resultado":"Detrator"},{"data":"2026-05-21","telefone":"5527993172626","nota":"🙂 Boa","motivo":"Bom atendimento","nome":"Josue Araujo Dos Santos","empresa":"Agrovix Serviços Ambientais Ltda","resultado":"Promotor"},{"data":"2026-05-21","telefone":"5571993211454","nota":"☹️ Ruim","motivo":"O","nome":"Genilson Santos De Oliveira","empresa":"Agrovix Serviços Ambientais Ltda","resultado":"Detrator"},{"data":"2026-05-21","telefone":"5527997843688","nota":"😁 Ótima","motivo":"10","nome":"Leomar Da Conceicao Fonseca","empresa":"Agrovix Serviços Ambientais Ltda","resultado":"Promotor"},{"data":"2026-05-21","telefone":"5527997500462","nota":"☹️ Ruim","motivo":"Não to gostando não muito ruim experiência e muito carro os juros","nome":"Nelcira Rocha Trancoso Dos Santos","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Detrator"},{"data":"2026-05-21","telefone":"5527992367659","nota":"🙂 Regular","motivo":"Eu só queria um cartão de crédito","nome":"Carlos Dias De Souza Junior","empresa":"Agrovix Serviços Ambientais Ltda","resultado":"Neutro"},{"data":"2026-05-21","telefone":"5527988852908","nota":"😁 Ótima","motivo":"Excelente em qualquer ocasião","nome":"Manoel Tiago Dos Santos","empresa":"Agrovix Serviços Ambientais Ltda","resultado":"Promotor"},{"data":"2026-05-21","telefone":"5534991292883","nota":"😁 Ótima","motivo":"Por que não tenho nada a reclamar","nome":"Ronaldo Rosa Dos Santos","empresa":"Agrovix Serviços Ambientais Ltda","resultado":"Promotor"},{"data":"2026-05-21","telefone":"5527997550884","nota":"😁 Ótima","motivo":"Está ótimo","nome":"Paulo Cabral De Souza Neto","empresa":"Agrovix Serviços Ambientais Ltda","resultado":"Promotor"},{"data":"2026-05-21","telefone":"5527981298074","nota":"😡 Péssima","motivo":"Pq nao consigo tirar meu salário desse banco e o processo estar demorando","nome":"Gleison Morais Da Rocha","empresa":"Agrovix Serviços Ambientais Ltda","resultado":"Detrator"},{"data":"2026-05-21","telefone":"5527997183704","nota":"😁 Ótima","motivo":"Através da empresa que trabalho","nome":"Emerson Ferreira Lamarca","empresa":"Agrovix Serviços Ambientais Ltda","resultado":"Promotor"},{"data":"2026-05-21","telefone":"5527995027058","nota":"🙂 Boa","motivo":"Facilidade em mecher","nome":"Sidval Alves Melo","empresa":"Agrovix Serviços Ambientais Ltda","resultado":"Promotor"},{"data":"2026-05-21","telefone":"5527999866229","nota":"😁 Ótima","motivo":"O kesh bank e muito  bom mesmo","nome":"Renan Dos Santos Conceicao","empresa":"Agrovix Serviços Ambientais Ltda","resultado":"Promotor"},{"data":"2026-05-21","telefone":"5527997339735","nota":"😁 Ótima","motivo":"10","nome":"Marcio Jesus Dos Santos","empresa":"Agrovix Serviços Ambientais Ltda","resultado":"Promotor"},{"data":"2026-05-21","telefone":"5527992027199","nota":"😁 Ótima","motivo":"Ela e muito segura eu posso ter mais confiança nela","nome":"Lucas Gabriel Vitoriense Da Silva","empresa":"Agrovix Serviços Ambientais Ltda","resultado":"Promotor"},{"data":"2026-05-21","telefone":"5527996973615","nota":"🙂 Boa","motivo":"é um app muito bom, porém nao sei mexer direito","nome":"Rebeca Dos Santos Barbosa","empresa":"Agrovix Serviços Ambientais Ltda","resultado":"Promotor"},{"data":"2026-05-21","telefone":"5527999926468","nota":"☹️ Ruim","motivo":"Ate o momento  não  comsegui  usalas","nome":"Vanderlei Domingos Ziviani","empresa":"Agrovix Serviços Ambientais Ltda","resultado":"Detrator"},{"data":"2026-05-21","telefone":"5527988392111","nota":"🙂 Boa","motivo":"Seria ótimo se tivesse cartão","nome":"Gilson Pereira De Araujo","empresa":"Agrovix Serviços Ambientais Ltda","resultado":"Promotor"},{"data":"2026-05-21","telefone":"5527999983042","nota":"🙂 Boa","motivo":"Facilidade para usar","nome":"Mateus Cesar Moraes Ferreira","empresa":"Agrovix Serviços Ambientais Ltda","resultado":"Promotor"},{"data":"2026-05-21","telefone":"5527999630969","nota":"😁 Ótima","motivo":"10","nome":"Flavio Santos Pessoa","empresa":"Agrovix Serviços Ambientais Ltda","resultado":"Promotor"},{"data":"2026-05-21","telefone":"5527999798894","nota":"😁 Ótima","motivo":"10","nome":"Davi Lucas De Amorim Vieira","empresa":"Agrovix Serviços Ambientais Ltda","resultado":"Promotor"},{"data":"2026-05-21","telefone":"5527998773848","nota":"🙂 Boa","motivo":"Porque ajuda muito quando agente precisa","nome":"Darlan De Jesus Da Purificacao","empresa":"Agrovix Serviços Ambientais Ltda","resultado":"Promotor"},{"data":"2026-05-21","telefone":"5527995060461","nota":"🙂 Regular","motivo":"preciso de um cartão e não tem","nome":"Silvio Pereira","empresa":"Agrovix Serviços Ambientais Ltda","resultado":"Neutro"},{"data":"2026-05-21","telefone":"5521974329571","nota":"😁 Ótima","motivo":"Porque pra mim está sendo muito bom não tive problema nenhum com o banco","nome":"Luciana Tiengo De Almeida","empresa":"Dynamis Facilities Ltda","resultado":"Promotor"},{"data":"2026-05-21","telefone":"5527999186346","nota":"😁 Ótima","motivo":"10","nome":"Flavio Cardoso Raymundo","empresa":"Dynamis Facilities Ltda","resultado":"Promotor"},{"data":"2026-05-21","telefone":"5527997644988","nota":"😡 Péssima","motivo":"Não gosto desse banco por diversos motivos. A instituição não possui agência física nem oferece cartão, o que dificulta bastante o atendimento e a utilização no dia a dia. Além disso, não é possível realizar portabilidade, limitando ainda mais as opções do cliente.\nOutro problema frequente é que, toda vez que o dinheiro cai na conta, a senha acaba bloqueando, obrigando a desinstalar e instalar novamente o aplicativo para conseguir acessar. Isso gera transtorno e perda de tempo.\nTambém existe a dependência total da internet, ou seja, se a pessoa estiver sem conexão, fica impossibilitada de utilizar a conta ou resolver qualquer problema. Tudo isso acaba tornando a experiência muito ruim e pouco prática.","nome":"Andre Teixeira Miguel","empresa":"Agrovix Serviços Ambientais Ltda","resultado":"Detrator"},{"data":"2026-05-21","telefone":"5527998341667","nota":"🙂 Boa","motivo":"Q o banco é bom","nome":"Marcos Vinicius Da Silva Cruz","empresa":"Agrovix Serviços Ambientais Ltda","resultado":"Promotor"},{"data":"2026-05-21","telefone":"5527995115957","nota":"🙂 Regular","motivo":"O app tem poucas opções","nome":"Marcileide Christo","empresa":"Dynamis Facilities Ltda","resultado":"Neutro"},{"data":"2026-05-21","telefone":"5527992377199","nota":"😁 Ótima","motivo":"Aplicativo rápido e direto, sem enrolação","nome":"Camilla Fialho Silva","empresa":"Dynamis Facilities Ltda","resultado":"Promotor"},{"data":"2026-05-21","telefone":"5527988732756","nota":"😁 Ótima","motivo":"Conta salário foi para este banco.","nome":"Vanderli Ripardo","empresa":"Dynamis Facilities Ltda","resultado":"Promotor"},{"data":"2026-05-21","telefone":"5527997219905","nota":"🙂 Boa","motivo":"ESTOU CONHECENDO ÁGORA","nome":"Willian De Queiroz Bento","empresa":"Dynamis Facilities Ltda","resultado":"Promotor"},{"data":"2026-05-21","telefone":"5527997982244","nota":"😁 Ótima","motivo":"Facilidade para abrir e acessar o app","nome":"Sheilla Do Carmo Neves Verli","empresa":"Dynamis Facilities Ltda","resultado":"Promotor"},{"data":"2026-05-21","telefone":"5527992283261","nota":"😁 Ótima","motivo":"Porque me facilitou pra mim fazer pix com ele ! Eu não sabia fazerk","nome":"Adineusa Fernandes Batista Kelter Amorim","empresa":"Dynamis Facilities Ltda","resultado":"Promotor"},{"data":"2026-05-21","telefone":"5527997926824","nota":"🙂 Regular","motivo":"Quero cartão de crédito","nome":"Glacieda Dos Santos Ribeiro Gomes","empresa":"Dynamis Facilities Ltda","resultado":"Neutro"},{"data":"2026-05-21","telefone":"5527996193716","nota":"🙂 Regular","motivo":"5","nome":"Perivaldo Silva Alves","empresa":"Agrovix Serviços Ambientais Ltda","resultado":"Neutro"},{"data":"2026-05-21","telefone":"5527988679394","nota":"🙂 Boa","motivo":"👍🏻","nome":"Arlete Batista Eugenio","empresa":"Dynamis Facilities Ltda","resultado":"Promotor"},{"data":"2026-05-21","telefone":"5527988548199","nota":"🙂 Regular","motivo":"Não tem nada de benefício, só uso pq a empresa que trabalha usa esse app para pagamento,ou seja sou obrigado a usar o Kesh bank e não tenho Benefício nenhum.","nome":"David Modesto Da Silva","empresa":"Dynamis Facilities Ltda","resultado":"Neutro"},{"data":"2026-05-21","telefone":"5582996302364","nota":"😁 Ótima","motivo":"Muito bom","nome":"Jose Pedro De Farias Neto","empresa":"Laryssa Laryne Neves Canuto Dalacorte Ltda","resultado":"Promotor"},{"data":"2026-05-21","telefone":"5527988174802","nota":"🙂 Boa","motivo":"Só não foi ótimo, pq não tem cartão.","nome":"Clenilson Santos Nascimento","empresa":"Dynamis Facilities Ltda","resultado":"Promotor"},{"data":"2026-05-21","telefone":"5527988619315","nota":"😁 Ótima","motivo":"Tudo ok..👍😎","nome":"Adriano Martins Zumpano","empresa":"Dynamis Facilities Ltda","resultado":"Promotor"},{"data":"2026-05-21","telefone":"5527997597290","nota":"🙂 Boa","motivo":"Pq mesmo que desconta de uma vez o empréstimo sempre nos da nova oportunidade e gosto tb do bônus que a gente ganha que uso tb pra recarga ou uber","nome":"Flavia Goncalves Da Cruz","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-05-21","telefone":"5511947215428","nota":"🙂 Boa","motivo":"O banco atende muito bem todas as funções de qualquer outro banco","nome":"Daise Almeida Dos Santos","empresa":"Magic Graphic Propaganda Ltda","resultado":"Promotor"},{"data":"2026-05-21","telefone":"5582996351570","nota":"😁 Ótima","motivo":"Ótima","nome":"Delvania Andrade Da Silva","empresa":"Laryssa Laryne Neves Canuto Dalacorte Ltda","resultado":"Promotor"},{"data":"2026-05-21","telefone":"5527996188447","nota":"😁 Ótima","motivo":"Não tive nenhum imprevisto.","nome":"Karla Nogueira De Oliveira","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-05-21","telefone":"5582996799907","nota":"😁 Ótima","motivo":"10","nome":"Altamiro Ferreira Da Silva","empresa":"Laryssa Laryne Neves Canuto Dalacorte Ltda","resultado":"Promotor"},{"data":"2026-05-21","telefone":"5511981899945","nota":"😁 Ótima","motivo":"crédito facil e devolução dos juros","nome":"Marcelo Chaves Ramos Da Silva","empresa":"Kesh Bank","resultado":"Promotor"},{"data":"2026-05-21","telefone":"5527996133314","nota":"🙂 Regular","motivo":"conseguir ter acesso com facilidade","nome":"Emerson Alves Ferreira","empresa":"Agrovix Serviços Ambientais Ltda","resultado":"Neutro"},{"data":"2026-05-21","telefone":"5527992916678","nota":"🙂 Boa","motivo":"Estou aprendendo","nome":"Eliceia Chiarelli Sacht","empresa":"Dynamis Facilities Ltda","resultado":"Promotor"},{"data":"2026-05-21","telefone":"5527996705951","nota":"🙂 Boa","motivo":"E um banco bom ,porem ainda não temos cratão fisico ,nos aferece otimos emprestimas ..","nome":"Nayara Pereira","empresa":"Multisserviços","resultado":"Promotor"},{"data":"2026-05-21","telefone":"5511999690622","nota":"🙂 Boa","motivo":"Nada a acrescentar","nome":"Danilo Mauricio Pereira Monteiro","empresa":"Magic Graphic Propaganda Ltda","resultado":"Promotor"},{"data":"2026-05-21","telefone":"5527998716974","nota":"🙂 Regular","motivo":"O aplicativo falando que a senha está errada toda vez que entro","nome":"Greiciele Duques Dos Santos","empresa":"Multisserviços","resultado":"Neutro"},{"data":"2026-05-21","telefone":"5527988745778","nota":"😁 Ótima","motivo":"Amém, uma benção, Graças a Deus, vocês estão sempre me ajudando, muito obrigado.","nome":"Edimar Gomes De Freitas","empresa":"Dynamis Soluções Integradas Ltda","resultado":"Promotor"},{"data":"2026-05-21","telefone":"5527988834627","nota":"😁 Ótima","motivo":"Gostei","nome":"Adeilda Justo Goncalves","empresa":"Dynamis Facilities Ltda","resultado":"Promotor"},{"data":"2026-05-21","telefone":"5527981644376","nota":"☹️ Ruim","motivo":"O Kesh Bank diz ser o banco do trabalhador, porém não permite a portabilidade. Então, não pode se intitular o banco do trabalhador.","nome":"Jhoner Da Silva Nunes","empresa":"Dynamis Facilities Ltda","resultado":"Detrator"},{"data":"2026-05-21","telefone":"5527996444890","nota":"🙂 Boa","motivo":"O fato de poder ter acesso aos meus valores sem ter que ir para uma fila, já é uma grande coisa. Porém, inicialmente tive dificuldades para o acesso aos dados para acessar a conta e o fato de ter, no momento de realizar uma transferência via Pix, o valor de 1000,00 por vez, mesmo podendo fazer outros de imediato, ainda assim fica mais trabalhoso que o necessário.","nome":"Laudeir Sebastiao Moreno","empresa":"Dynamis Facilities Ltda","resultado":"Promotor"},{"data":"2026-05-21","telefone":"5527997452501","nota":"😁 Ótima","motivo":"Agilidade no aplicativo","nome":"Leia Mascena Da Silva","empresa":"Multisserviços","resultado":"Promotor"},{"data":"2026-05-21","telefone":"5527997571170","nota":"🙂 Boa","motivo":"O banco é muito seguro mais só faltou a parte da portabilidade","nome":"Ana Paula Mascena Souza","empresa":"Multisserviços","resultado":"Promotor"},{"data":"2026-05-21","telefone":"5527999542654","nota":"🙂 Boa","motivo":"Sem conhecimento","nome":"Maria Lucia Foramiglio De Jesus","empresa":"Multisserviços","resultado":"Promotor"},{"data":"2026-05-21","telefone":"5527988155062","nota":"😁 Ótima","motivo":"Pix sem cobrança, fácil de mexer, sem muitas democracia!","nome":"Maxsuel Silva Dos Santos","empresa":"Multisserviços","resultado":"Promotor"},{"data":"2026-05-21","telefone":"5527988290655","nota":"🙂 Boa","motivo":"Praticidade","nome":"Michel Gianizeli Carminati","empresa":"Dynamis Soluções Integradas Ltda","resultado":"Promotor"},{"data":"2026-05-21","telefone":"5527997418187","nota":"🙂 Boa","motivo":"O adiantamento","nome":"Weverton Ramos Dos Santos","empresa":"Multisserviços","resultado":"Promotor"},{"data":"2026-05-21","telefone":"5527996452746","nota":"😁 Ótima","motivo":"O dinheiro facilitado e o cachebk","nome":"Jerri Adriani Eleuterio Francisco","empresa":"Dynamis Facilities Ltda","resultado":"Promotor"},{"data":"2026-05-21","telefone":"5527998334185","nota":"😁 Ótima","motivo":"E um banco que não tenho dificuldade em usar","nome":"Vania Dos Santos Gomes Pereira","empresa":"Multisserviços","resultado":"Promotor"},{"data":"2026-05-21","telefone":"5527996999747","nota":"🙂 Boa","motivo":"10","nome":"Vanuza Braga Do Sacramento","empresa":"Multisserviços","resultado":"Promotor"},{"data":"2026-05-21","telefone":"5527988294915","nota":"😁 Ótima","motivo":"Sempre oferece crédito para os clientes","nome":"Marcela Eduarda Montenegro Moledo","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Promotor"},{"data":"2026-05-21","telefone":"5527997441795","nota":"😁 Ótima","motivo":"Boa tarde","nome":"Marcia Macedo Monteiro Da Silveira","empresa":"Multisserviços","resultado":"Promotor"},{"data":"2026-05-21","telefone":"5527997039550","nota":"🙂 Boa","motivo":"O BOM ATENDIMENTO VIA ZAP, E A RAPIZ EM RESOLVER","nome":"Marcela Valentim","empresa":"Multisserviços","resultado":"Promotor"},{"data":"2026-05-21","telefone":"5527988894073","nota":"😁 Ótima","motivo":"7","nome":"Raian Pinto Da Conceicao","empresa":"VSP - Vigilância e Segurança Patrimonial","resultado":"Promotor"},{"data":"2026-05-21","telefone":"5527988972941","nota":"😡 Péssima","motivo":"Todos","nome":"Rianh Carlos Pereira Lisboa Santos","empresa":"Ativa Terceirização de Mão de Obra","resultado":"Detrator"},{"data":"2026-05-21","telefone":"5527988411071","nota":"😁 Ótima","motivo":"5","nome":"Roziene De Jesus Paixao","empresa":"Multisserviços","resultado":"Promotor"},{"data":"2026-05-21","telefone":"5527997117180","nota":"😁 Ótima","motivo":"Os benefícios","nome":"Larice Claudino De Souza","empresa":"Multisserviços","resultado":"Promotor"},{"data":"2026-05-21","telefone":"5527998199418","nota":"😁 Ótima","motivo":"Está tudo certo","nome":"Maristela Medeiro Silva","empresa":"Multisserviços","resultado":"Promotor"},{"data":"2026-05-21","telefone":"5527997492881","nota":"😁 Ótima","motivo":"O atendimento","nome":"Marcos Rogerio Mendes Dos Santos","empresa":"Dynamis Facilities Ltda","resultado":"Promotor"},{"data":"2026-05-21","telefone":"5511966102349","nota":"😡 Péssima","motivo":"falta de suporte quando precisei","nome":"Julya Vendite Zancoper","empresa":"Magic Graphic Propaganda Ltda","resultado":"Detrator"},{"data":"2026-05-21","telefone":"5527999738779","nota":"🙂 Boa","motivo":"👍","nome":"Sonia Matias Dos Santos","empresa":"Multisserviços","resultado":"Promotor"},{"data":"2026-05-21","telefone":"5527999251074","nota":"🙂 Boa","motivo":"Ok","nome":"Ediana Silva Da Penha","empresa":"Multisserviços","resultado":"Promotor"},{"data":"2026-05-21","telefone":"5527999660385","nota":"😁 Ótima","motivo":"Fácil de usar,o pouco que eu usei,foi bem simples de resolver o meu problema","nome":"Allan Souza Felix","empresa":"VSP - Vigilância e Segurança Patrimonial","resultado":"Promotor"},{"data":"2026-05-21","telefone":"5527997591682","nota":"🙂 Boa","motivo":"Retorno","nome":"Paulo Cezar Rangel Junior","empresa":"VSP - Vigilância e Segurança Patrimonial","resultado":"Promotor"},{"data":"2026-05-21","telefone":"5527992386309","nota":"🙂 Boa","motivo":"Tem pouco tempo de uso para dar uma nota otima","nome":"Dioney Garcia Carvalho","empresa":"VSP - Vigilância e Segurança Patrimonial","resultado":"Promotor"},{"data":"2026-05-21","telefone":"5527996528855","nota":"😁 Ótima","motivo":"Atendimento ao cliente","nome":"Charles Neves Barbosa","empresa":"VSP - Vigilância e Segurança Patrimonial","resultado":"Promotor"},{"data":"2026-05-21","telefone":"5527997909521","nota":"🙂 Regular","motivo":"Pq fazemos Pix e não chega no destino e não devolve","nome":"Mariza Daud Meira","empresa":"Multisserviços","resultado":"Neutro"},{"data":"2026-05-21","telefone":"5527996558128","nota":"🙂 Regular","motivo":"Por não dar a oportunidade da portabilidade","nome":"Renato De Jesus Costa","empresa":"Multisserviços","resultado":"Neutro"},{"data":"2026-05-21","telefone":"5511965382844","nota":"🙂 Boa","motivo":"juros de emprestimo muito alto","nome":"Jacqueline Pereira Da Silva","empresa":"Seven Consultoria Financeira Ltda","resultado":"Promotor"},{"data":"2026-05-21","telefone":"5527997874197","nota":"😁 Ótima","motivo":"Limite de empréstimo","nome":"Genira Silva Da Cruz De Jesus","empresa":"Multisserviços","resultado":"Promotor"},{"data":"2026-05-21","telefone":"5527996903155","nota":"😁 Ótima","motivo":"Bom.atediminto","nome":"Antonio Hipolito De Araujo","empresa":"Agrovix Serviços Ambientais Ltda","resultado":"Promotor"},{"data":"2026-05-21","telefone":"5511930121919","nota":"🙂 Regular","motivo":"Juros muito alto de empréstimo","nome":"Jaqueline Leal De Souza Belga","empresa":"Seven Consultoria Financeira Ltda","resultado":"Neutro"},{"data":"2026-05-21","telefone":"5527996945382","nota":"😁 Ótima","motivo":"um banco muito bom  que libera crédito isso é muito bom.","nome":"Joabe Costa Dos Santos","empresa":"Multisserviços","resultado":"Promotor"},{"data":"2026-05-21","telefone":"5527996338793","nota":"😁 Ótima","motivo":"Foi bom se cliente de vocês","nome":"Lindaura Alves De Oliveira","empresa":"Multisserviços","resultado":"Promotor"},{"data":"2026-05-21","telefone":"5527998030597","nota":"😁 Ótima","motivo":"10 top de mais","nome":"Rochester Vieira Das Neves","empresa":"Agrovix Serviços Ambientais Ltda","resultado":"Promotor"},{"data":"2026-05-21","telefone":"5527997990095","nota":"😁 Ótima","motivo":"Bom trabalho de vcs","nome":"Mauricio Moura Aquiles","empresa":"Agrovix Serviços Ambientais Ltda","resultado":"Promotor"},{"data":"2026-05-21","telefone":"5582994220309","nota":"😁 Ótima","motivo":"Que me motivou foi a empresa eu achei muito legal","nome":"Ednaldo Correia Da Silva","empresa":"Laryssa Laryne Neves Canuto Dalacorte Ltda","resultado":"Promotor"},{"data":"2026-05-21","telefone":"5527995179510","nota":"🙂 Boa","motivo":"Acho que é um bom banco por nós oferecer  um crédito imediato no decorrer do mês facilitando algum pagamento do mês que ficou pendente","nome":"Maria Do Socorro Souza Moreira","empresa":"Multisserviços","resultado":"Promotor"},{"data":"2026-05-21","telefone":"5527999559751","nota":"🙂 Boa","motivo":"Estou satisfeito até agora.","nome":"Marcos Antonio Siqueira","empresa":"VSP - Vigilância e Segurança Patrimonial","resultado":"Promotor"},{"data":"2026-05-21","telefone":"5527992590880","nota":"☹️ Ruim","motivo":"Primeiro lugar não tenho cartão segudo lugar não tenho conhecimento a  este banco ok","nome":"Jose Luiz Viana","empresa":"Agrovix Serviços Ambientais Ltda","resultado":"Detrator"}],"disparos_agg":[{"empresa":"Kesh Bank","mes":"2026-01","sim":9,"nao":5},{"empresa":"VSP - Vigilância e Segurança Patrimonial","mes":"2026-01","sim":12,"nao":61},{"empresa":"Lider Limpe Limpeza Comercial Ltda","mes":"2026-01","sim":89,"nao":840},{"empresa":"Lider Limpe Limpeza Comercial Ltda","mes":"2026-04","sim":16,"nao":0},{"empresa":"Multisserviços","mes":"2026-02","sim":30,"nao":160},{"empresa":"Ativa Terceirização de Mão de Obra","mes":"2026-02","sim":151,"nao":2468},{"empresa":"Help Soluções","mes":"2026-03","sim":1,"nao":36},{"empresa":"Inter Soluções","mes":"2026-03","sim":0,"nao":52},{"empresa":"João Domingos Advogados","mes":"2026-03","sim":1,"nao":34},{"empresa":"MRA - Martins Ribeiro ADM","mes":"2026-03","sim":4,"nao":36},{"empresa":"Alysson Construção Civil","mes":"2026-04","sim":1,"nao":2},{"empresa":"Brasifort Segurança Eletronica","mes":"2026-04","sim":5,"nao":22},{"empresa":"FCA Engenharia","mes":"2026-04","sim":1,"nao":39},{"empresa":"LGA - Aço Forte","mes":"2026-04","sim":2,"nao":28},{"empresa":"Cia De Moda - Marianne Zelazny","mes":"2026-04","sim":0,"nao":8},{"empresa":"MOOT Consultoria em RH e TI","mes":"2026-04","sim":0,"nao":3},{"empresa":"R F Odontologia","mes":"2026-04","sim":0,"nao":2},{"empresa":"The Spot (Saint joe Burger)","mes":"2026-04","sim":0,"nao":7},{"empresa":"Cia De Moda - Valeria Aparecida Colpani Zelazny","mes":"2026-04","sim":1,"nao":8},{"empresa":"Engevidros - Santana Industria e Comercio de vidros","mes":"2026-04","sim":1,"nao":17},{"empresa":"Ativa Terceirização de Mão de Obra","mes":"2026-05","sim":25,"nao":0},{"empresa":"Agrovix Serviços Ambientais Ltda","mes":"2026-05","sim":33,"nao":343},{"empresa":"Dynamis Facilities Ltda","mes":"2026-05","sim":19,"nao":106},{"empresa":"Dynamis Soluções Integradas Ltda","mes":"2026-05","sim":2,"nao":30},{"empresa":"EMEC Facilities Ltda","mes":"2026-05","sim":0,"nao":7},{"empresa":"Laryssa Laryne Neves Canuto Dalacorte Ltda","mes":"2026-05","sim":4,"nao":72},{"empresa":"Legalização da Paisagem","mes":"2026-05","sim":0,"nao":2},{"empresa":"Magic Graphic Propaganda Ltda","mes":"2026-05","sim":4,"nao":70},{"empresa":"Multisserviços","mes":"2026-05","sim":31,"nao":148},{"empresa":"Seven Consultoria Financeira Ltda","mes":"2026-05","sim":2,"nao":12},{"empresa":"VSP - Vigilância e Segurança Patrimonial","mes":"2026-05","sim":15,"nao":53},{"empresa":"Alysson Construção Civil","mes":"2026-05","sim":0,"nao":21}],"si_agg":[{"empresa":"Vigilancia E Segurana Patrimonial","mes":"2026-01","total":4},{"empresa":"Lider Limpe Limpeza Comercial Ltda","mes":"2026-01","total":38},{"empresa":"Lider Multisservicos Ltda","mes":"2026-02","total":7},{"empresa":"Ativa Terceirizacao De Mao Obra","mes":"2026-02","total":115},{"empresa":"#N/A","mes":"2026-02","total":1},{"empresa":"Joao Domingos Advogados Associados","mes":"2026-03","total":1},{"empresa":"Inter Solucoes Financeiras Ltda","mes":"2026-03","total":1},{"empresa":"Martins Ribeiro Adm De Shopping Ltda","mes":"2026-03","total":3},{"empresa":"Help Solucoes Financeiras Ltda","mes":"2026-03","total":1},{"empresa":"Fca Engenharia Ltda","mes":"2026-04","total":1},{"empresa":"The Spot Industrializacao De Alimentos Ltda","mes":"2026-04","total":1},{"empresa":"Lga Services Ltda","mes":"2026-04","total":1},{"empresa":"Brasifort Seguranca Eletronica","mes":"2026-04","total":2},{"empresa":"Ativa Terceirizacao De Mao Obra","mes":"2026-05","total":2},{"empresa":"Agrovix Servicos Ambientais Ltda","mes":"2026-05","total":13},{"empresa":"Dynamis Facilities Ltda","mes":"2026-05","total":4},{"empresa":"Dynamis Solucoes Integradas Ltda","mes":"2026-05","total":2},{"empresa":"Magic Graphic Propaganda Ltda","mes":"2026-05","total":4},{"empresa":"Lider Multisservicos Ltda","mes":"2026-05","total":8},{"empresa":"Seven Consultoria Financeira Ltda","mes":"2026-05","total":1},{"empresa":"Emec Facilities Ltda","mes":"2026-05","total":1},{"empresa":"Vigilancia E Segurana Patrimonial","mes":"2026-05","total":2},{"empresa":"Alysson Construcao Civil Ltda","mes":"2026-05","total":2},{"empresa":"Laryssa Laryne Neves Canuto Dalacorte Ltda","mes":"2026-05","total":1}]};
+const META_NPS = 73;
+
+let RAW = null;
+let fd = { r:[], da:[], sa:[], rComp:[], daComp:[], saComp:[] };
+let CH = {};
+let muAll = []; // all multi-response users computed from full RAW
+
+// ── CUSTOM DATALABELS PLUGIN ────────────────────────────────
+const dataLabelPlugin = {
+  id: 'dataLabels',
+  afterDatasetsDraw(chart) {
+    const { ctx } = chart;
+    const isHoriz = chart.options.indexAxis === 'y';
+    chart.data.datasets.forEach((ds, di) => {
+      const meta = chart.getDatasetMeta(di);
+      if (meta.hidden) return;
+      meta.data.forEach((el, idx) => {
+        const val = ds.data[idx];
+        if (val === null || val === undefined) return;
+        const lbl = ds._labelFn ? ds._labelFn(val) : (typeof val === 'number' ? val : String(val));
+        ctx.save();
+        ctx.font = 'bold 11px system-ui';
+        ctx.textAlign = 'center';
+        if (isHoriz) {
+          ctx.textBaseline = 'middle';
+          ctx.fillStyle = '#e4e4e7';
+          ctx.fillText(lbl, el.x + 14, el.y);
+        } else {
+          ctx.textBaseline = 'bottom';
+          const color = ds._labelColor ? ds._labelColor(val) : '#e4e4e7';
+          ctx.fillStyle = color;
+          ctx.fillText(lbl, el.x, el.y - 4);
+        }
+        ctx.restore();
+      });
+    });
+  }
+};
+Chart.register(dataLabelPlugin);
+
+// ── DATA LOADING ─────────────────────────────────────────────
+async function loadData() {
+  setLoading(true);
+  try {
+    const resp = await fetch(SCRIPT_URL, { redirect: 'follow' });
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const data = await resp.json();
+    if (!data.respostas?.length) throw new Error('vazio');
+    RAW = data;
+    setLive(true, data.updated);
+    toast('✅ Dados atualizados do Google Sheets!', false);
+  } catch(e) {
+    RAW = FALLBACK;
+    setLive(false, null);
+    toast('⚠️ Usando dados em cache (jan–mai 2026)', true);
+  }
+  initFilters();
+  applyF();
+  setLoading(false);
+}
+
+function setLive(on, iso) {
+  const pill=document.getElementById('livePill'), dot=document.getElementById('liveDot'), txt=document.getElementById('liveText'), upd=document.getElementById('updTime');
+  if (on) { pill.className='live-pill'; dot.className='live-dot pulse'; txt.textContent='Ao vivo · Google Sheets'; upd.textContent=iso?'Atualizado '+new Date(iso).toLocaleString('pt-BR'):''; }
+  else { pill.className='live-pill off'; dot.className='live-dot off'; txt.textContent='Cache · jan–mai 2026'; upd.textContent=''; }
+}
+function setLoading(on) {
+  const f=document.getElementById('lf'); f.className='lf'+(on?' run':'');
+  if(!on){f.style.width='100%';setTimeout(()=>{f.style.width='0'},400);}
+}
+function toast(msg,err) {
+  const t=document.getElementById('toast'); t.textContent=msg; t.className='toast'+(err?' err':'')+' show';
+  clearTimeout(t._to); t._to=setTimeout(()=>t.classList.remove('show'),3500);
+}
+
+// ── QUICK DATE FILTERS ───────────────────────────────────────
+function setQ(q) {
+  const yr = new Date().getFullYear();
+  const ranges = {1:['01-01','03-31'],2:['04-01','06-30'],3:['07-01','09-30'],4:['10-01','12-31']};
+  const [s,e] = ranges[q];
+  document.getElementById('fFrom').value = `${yr}-${s}`;
+  document.getElementById('fTo').value   = `${yr}-${e}`;
+  document.querySelectorAll('.qbtn').forEach(b=>b.classList.remove('active'));
+  document.getElementById(`qb-q${q}`).classList.add('active');
+  applyF();
+}
+function setMesAtual() {
+  const now=new Date(), yr=now.getFullYear(), mo=String(now.getMonth()+1).padStart(2,'0');
+  const lastDay=new Date(yr,now.getMonth()+1,0).getDate();
+  document.getElementById('fFrom').value=`${yr}-${mo}-01`;
+  document.getElementById('fTo').value=`${yr}-${mo}-${lastDay}`;
+  setActiveQ('qb-cm');
+}
+function setMesAnterior() {
+  const now=new Date(); now.setMonth(now.getMonth()-1);
+  const yr=now.getFullYear(), mo=String(now.getMonth()+1).padStart(2,'0');
+  const lastDay=new Date(yr,now.getMonth()+1,0).getDate();
+  document.getElementById('fFrom').value=`${yr}-${mo}-01`;
+  document.getElementById('fTo').value=`${yr}-${mo}-${lastDay}`;
+  setActiveQ('qb-pm');
+}
+function setAno() {
+  const yr=new Date().getFullYear();
+  document.getElementById('fFrom').value=`${yr}-01-01`;
+  document.getElementById('fTo').value=`${yr}-12-31`;
+  setActiveQ('qb-yr');
+}
+function setActiveQ(id) { document.querySelectorAll('.qbtn').forEach(b=>b.classList.remove('active')); document.getElementById(id)?.classList.add('active'); applyF(); }
+function clearQBtn() { document.querySelectorAll('.qbtn').forEach(b=>b.classList.remove('active')); }
+
+// ── FILTERS ──────────────────────────────────────────────────
+function initFilters() {
+  const dates=RAW.respostas.map(r=>r.data).sort();
+  const ff=document.getElementById('fFrom'), ft=document.getElementById('fTo');
+  if(!ff.value&&dates.length){ff.value=dates[0];ft.value=dates[dates.length-1];}
+  const sel=document.getElementById('fEmp'), cur=sel.value;
+  sel.innerHTML='<option value="">Todas</option>';
+  [...new Set(RAW.respostas.map(r=>r.empresa).filter(Boolean))].sort().forEach(e=>{
+    const o=document.createElement('option');o.value=e;o.textContent=e;if(e===cur)o.selected=true;sel.appendChild(o);
+  });
+}
+
+function applyF() {
+  if (!RAW) return;
+  const fr=document.getElementById('fFrom').value;
+  const to=document.getElementById('fTo').value;
+  const em=document.getElementById('fEmp').value;
+  // Date + company filtered (for most views)
+  fd.r=RAW.respostas.filter(r=>(!fr||r.data>=fr)&&(!to||r.data<=to)&&(!em||r.empresa===em));
+  fd.da=RAW.disparos_agg.filter(r=>(!fr||r.mes+'-01'>=fr.slice(0,7)+'-01')&&(!to||r.mes+'-01'<=to.slice(0,7)+'-31')&&(!em||r.empresa===em));
+  fd.sa=RAW.si_agg.filter(r=>(!fr||r.mes+'-01'>=fr.slice(0,7)+'-01')&&(!to||r.mes+'-01'<=to.slice(0,7)+'-31')&&(!em||r.empresa===em));
+  // Company-only filtered (for monthly evolution charts)
+  fd.rComp=RAW.respostas.filter(r=>!em||r.empresa===em);
+  fd.daComp=RAW.disparos_agg.filter(r=>!em||r.empresa===em);
+  fd.saComp=RAW.si_agg.filter(r=>!em||r.empresa===em);
+  renderAll();
+}
+
+function clearF() {
+  const dates=RAW.respostas.map(r=>r.data).sort();
+  document.getElementById('fFrom').value=dates[0]||'';
+  document.getElementById('fTo').value=dates[dates.length-1]||'';
+  document.getElementById('fEmp').value='';
+  clearQBtn();
+  applyF();
+}
+
+// ── UTILS ────────────────────────────────────────────────────
+function calcNPS(arr){
+  const t=arr.length;if(!t)return{v:'—',p:0,n:0,d:0,t:0};
+  const p=arr.filter(r=>r.resultado==='Promotor').length;
+  const d=arr.filter(r=>r.resultado==='Detrator').length;
+  return{v:Math.round(((p-d)/t)*100),p,n:t-p-d,d,t};
+}
+function npsCol(v){if(v==='—')return'#71717a';if(v>=76)return'#1db954';if(v>=51)return'#60a5fa';if(v>=1)return'#fbbf24';return'#f87171';}
+function npsZone(v){
+  if(v==='—')return{label:'—',color:'#71717a'};
+  if(v>=76)return{label:'Excelência',color:'#1db954'};
+  if(v>=51)return{label:'Qualidade',color:'#60a5fa'};
+  if(v>=1)return{label:'Aperfeiçoamento',color:'#fbbf24'};
+  return{label:'Crítica',color:'#f87171'};
+}
+function fmtDate(d){return d?d.split('-').reverse().join('/'):'—';}
+function fmtMes(m){const[y,mo]=m.split('-');return['','Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'][+mo]+' '+y;}
+function isP(n){return['😁 Ótima','🙂 Boa'].includes(n);}
+function isD(n){return['☹️ Ruim','😡 Péssima'].includes(n);}
+function resScore(r){return r==='Promotor'?3:r==='Neutro'?2:1;}
+function dc(id){if(CH[id]){CH[id].destroy();delete CH[id];}}
+const gridOpts={color:'#27272a',borderColor:'#27272a'};
+const tickCol={color:'#71717a'};
+
+function renderAll(){renderSC();renderCharts();renderMes();renderEmp();renderMultiAll();renderD();}
+
+// ── SCORE CARDS ──────────────────────────────────────────────
+function renderSC(){
+  const{v,p,n,d,t}=calcNPS(fd.r);
+  const tD=fd.da.reduce((s,r)=>s+r.sim+r.nao,0);
+  const tSI=fd.sa.reduce((s,r)=>s+r.total,0);
+  // Engajamento: (respostas + sem_interesse) / disparos
+  const engRaw=tD?((t+tSI)/tD*100):0;
+  const eng=tD?engRaw.toFixed(1)+'%':'—';
+  const pp=t?Math.round(p/t*100):0, pd=t?Math.round(d/t*100):0, pn=t?Math.round(n/t*100):0;
+  const metaPct=v!=='—'?Math.min(Math.max((v/META_NPS)*100,0),100):0;
+  const zone=npsZone(v);
+  document.getElementById('sc').innerHTML=`
+    <div class="card card-nps">
+      <div class="card-lbl" style="color:#4ade80">NPS Geral</div>
+      <div class="card-val" style="font-size:46px;color:${npsCol(v)}">${v}</div>
+      <div class="meta-row"><span>Meta: <span class="meta-val">${META_NPS}</span></span><span style="color:${npsCol(v)}">${v!=='—'?((v/META_NPS*100).toFixed(0))+'%':''}</span></div>
+      <div class="pgb"><div class="pgf" style="width:${metaPct}%;background:${npsCol(v)}"></div></div>
+      <div style="margin-top:8px">
+        <div style="display:flex;height:8px;border-radius:4px;overflow:hidden;gap:1px">
+          <div style="flex:1;background:#f87171;opacity:.75"></div>
+          <div style="flex:2;background:#fbbf24;opacity:.75"></div>
+          <div style="flex:1.25;background:#60a5fa;opacity:.75"></div>
+          <div style="flex:1.25;background:#1db954;opacity:.75"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--dim);margin-top:2px">
+          <span>-100</span><span>0</span><span>50</span><span>75</span><span>100</span>
+        </div>
+      </div>
+      <div class="zone-badge" style="background:${zone.color}22;color:${zone.color};border:1px solid ${zone.color}44;margin-top:6px">
+        <span>●</span> Zona: ${zone.label}
+      </div>
+    </div>
+    <div class="card"><div class="card-lbl">Disparos</div><div class="card-val cb">${tD.toLocaleString('pt-BR')}</div><div class="card-sub">total enviados</div></div>
+    <div class="card"><div class="card-lbl">Respostas</div><div class="card-val">${t}</div><div class="card-sub">no período</div></div>
+    <div class="card"><div class="card-lbl">Sem Interesse</div><div class="card-val cy">${tSI}</div><div class="card-sub">optaram por não responder</div></div>
+    <div class="card"><div class="card-lbl">Engajamento</div><div class="card-val">${eng}</div>
+      <div class="card-sub">(respostas + s/interesse) / disparos</div>
+      <div class="pgb"><div class="pgf" style="width:${Math.min(engRaw,100)}%"></div></div>
+    </div>
+    <div class="card"><div class="card-lbl">Promotores</div><div class="card-val cg">${pp}%</div><div class="card-sub">${p} respostas</div></div>
+    <div class="card"><div class="card-lbl">Neutros</div><div class="card-val cy">${pn}%</div><div class="card-sub">${n} respostas</div></div>
+    <div class="card"><div class="card-lbl">Detratores</div><div class="card-val cr">${pd}%</div><div class="card-sub">${d} respostas</div></div>`;
+}
+
+// ── CHARTS ───────────────────────────────────────────────────
+function renderCharts(){
+  // Use company-filtered data for monthly charts (not date-filtered)
+  const allMonths=[...new Set([...fd.rComp.map(r=>r.data.slice(0,7)),...fd.daComp.map(r=>r.mes)])].sort();
+
+  // NPS Bar by month (company-filtered only)
+  const npsVals=allMonths.map(m=>{const r=fd.rComp.filter(x=>x.data.startsWith(m));return r.length?calcNPS(r).v:null;});
+  dc('nb');
+  CH.nb=new Chart(document.getElementById('cNPSBar'),{type:'bar',data:{
+    labels:allMonths.map(fmtMes),
+    datasets:[{label:'NPS',data:npsVals,backgroundColor:npsVals.map(v=>v===null?'#27272a':v>=76?'rgba(29,185,84,.7)':v>=51?'rgba(96,165,250,.7)':v>=1?'rgba(251,191,36,.7)':'rgba(248,113,113,.7)'),borderRadius:6,
+      _labelFn:v=>v===null?'':String(v),_labelColor:v=>npsVals.includes(v)?npsCol(v):'#e4e4e7'}]
+  },options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},dataLabels:{color:'#e4e4e7'}},
+    scales:{y:{min:-100,max:100,grid:gridOpts,ticks:tickCol,border:{color:'#27272a'}},x:{grid:{display:false},ticks:tickCol}}}});
+
+  // Donut (date-filtered)
+  const{p,n,d}=calcNPS(fd.r);
+  dc('dn');
+  CH.dn=new Chart(document.getElementById('cDon'),{type:'doughnut',data:{
+    labels:['Promotores','Neutros','Detratores'],
+    datasets:[{data:[p,n,d],backgroundColor:['#1db954','#fbbf24','#f87171'],borderWidth:2,borderColor:'#141414'}]
+  },options:{responsive:true,maintainAspectRatio:false,cutout:'66%',plugins:{legend:{position:'bottom',labels:{color:'#a1a1aa',padding:14,font:{size:12}}}}}});
+
+  // Nota bar (date-filtered)
+  const nm={};fd.r.forEach(r=>{nm[r.nota]=(nm[r.nota]||0)+1;});
+  const no=['😁 Ótima','🙂 Boa','🙂 Regular','☹️ Ruim','😡 Péssima'].filter(x=>nm[x]);
+  const nc={'😁 Ótima':'rgba(29,185,84,.75)','🙂 Boa':'rgba(74,222,128,.65)','🙂 Regular':'rgba(251,191,36,.7)','☹️ Ruim':'rgba(251,146,60,.7)','😡 Péssima':'rgba(248,113,113,.75)'};
+  dc('nt');
+  CH.nt=new Chart(document.getElementById('cNota'),{type:'bar',data:{
+    labels:no,datasets:[{data:no.map(x=>nm[x]||0),backgroundColor:no.map(x=>nc[x]||'#3f3f46'),borderRadius:6}]
+  },options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+    scales:{y:{grid:gridOpts,ticks:tickCol,border:{color:'#27272a'}},x:{grid:{display:false},ticks:{color:'#a1a1aa'}}}}});
+
+  // NPS por empresa horizontal (date-filtered)
+  const em={};fd.r.forEach(r=>{if(!em[r.empresa])em[r.empresa]=[];em[r.empresa].push(r);});
+  const en=Object.keys(em).sort((a,b)=>calcNPS(em[b]).v-calcNPS(em[a]).v);
+  const ev=en.map(e=>calcNPS(em[e]).v);
+  dc('ep');
+  CH.ep=new Chart(document.getElementById('cEmp'),{type:'bar',data:{
+    labels:en.map(e=>e.length>26?e.slice(0,26)+'…':e),
+    datasets:[{data:ev,backgroundColor:ev.map(v=>v>=76?'rgba(29,185,84,.7)':v>=51?'rgba(96,165,250,.7)':v>=1?'rgba(251,191,36,.7)':'rgba(248,113,113,.7)'),borderRadius:4}]
+  },options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+    scales:{x:{min:-100,max:100,grid:gridOpts,ticks:tickCol,border:{color:'#27272a'}},y:{grid:{display:false},ticks:{color:'#a1a1aa',font:{size:11}}}}}});
+
+  // Volume chart: Disparos, Respostas, Engajamento% by month (company-filtered)
+  const dVals=allMonths.map(m=>fd.daComp.filter(x=>x.mes===m).reduce((s,x)=>s+x.sim+x.nao,0));
+  const rVals=allMonths.map(m=>fd.rComp.filter(x=>x.data.startsWith(m)).length);
+  const siVals=allMonths.map(m=>fd.saComp.filter(x=>x.mes===m).reduce((s,x)=>s+x.total,0));
+  const engVals=allMonths.map((m,i)=>dVals[i]?+((rVals[i]+siVals[i])/dVals[i]*100).toFixed(1):null);
+  dc('vol');
+  CH.vol=new Chart(document.getElementById('cVolume'),{type:'bar',data:{
+    labels:allMonths.map(fmtMes),
+    datasets:[
+      {label:'Disparos',data:dVals,backgroundColor:'rgba(96,165,250,.6)',borderRadius:4,yAxisID:'y',order:2},
+      {label:'Respostas',data:rVals,backgroundColor:'rgba(29,185,84,.7)',borderRadius:4,yAxisID:'y',order:2},
+      {label:'Sem Interesse',data:siVals,backgroundColor:'rgba(251,191,36,.55)',borderRadius:4,yAxisID:'y',order:2},
+      {label:'Engajamento %',data:engVals,type:'line',borderColor:'#f87171',backgroundColor:'transparent',tension:0.4,pointBackgroundColor:'#f87171',pointRadius:4,yAxisID:'y2',order:1,_labelFn:v=>v===null?'':v+'%',_labelColor:()=>'#f87171'}
+    ]
+  },options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{position:'bottom',labels:{color:'#a1a1aa',font:{size:12},padding:14}}},
+    scales:{
+      y:{grid:gridOpts,ticks:tickCol,border:{color:'#27272a'}},
+      y2:{position:'right',grid:{display:false},ticks:{color:'#f87171',callback:v=>v+'%'},border:{color:'#27272a'}}
+    }}});
+}
+
+// ── TABLE MÊS ────────────────────────────────────────────────
+function renderMes(){
+  const months=[...new Set([...fd.r.map(r=>r.data.slice(0,7)),...fd.da.map(r=>r.mes)])].sort();
+  let html='',tp=0,tn=0,td2=0,tD=0,tSI=0;
+  months.forEach(m=>{
+    const r=fd.r.filter(x=>x.data.startsWith(m));
+    const disp=fd.da.filter(x=>x.mes===m).reduce((s,x)=>s+x.sim+x.nao,0);
+    const si=fd.sa.filter(x=>x.mes===m).reduce((s,x)=>s+x.total,0);
+    const{v,p,n,d,t}=calcNPS(r);
+    const eng=disp?((t+si)/disp*100).toFixed(1)+'%':'—';
+    const nc=v==='—'?'':v>=50?'nsp':v>=0?'nsn':'nsd';
+    tp+=p;tn+=n;td2+=d;tD+=disp;tSI+=si;
+    html+=`<tr><td><b>${fmtMes(m)}</b></td><td class="tc">${disp.toLocaleString('pt-BR')}</td><td class="tc">${t}</td><td class="tc">${si}</td><td class="tc">${eng}</td><td class="tc cg">${p}</td><td class="tc cy">${n}</td><td class="tc cr">${d}</td><td class="tc ns ${nc}">${v}</td></tr>`;
+  });
+  const tot=calcNPS(fd.r),totSIAll=fd.sa.reduce((s,r)=>s+r.total,0),tDispAll=fd.da.reduce((s,r)=>s+r.sim+r.nao,0);
+  const tc=tot.v==='—'?'':tot.v>=50?'nsp':tot.v>=0?'nsn':'nsd';
+  html+=`<tr class="tfoot"><td>TOTAL</td><td class="tc">${tDispAll.toLocaleString('pt-BR')}</td><td class="tc">${fd.r.length}</td><td class="tc">${tSI}</td><td class="tc">${tDispAll?((fd.r.length+tSI)/tDispAll*100).toFixed(1)+'%':'—'}</td><td class="tc cg">${tp}</td><td class="tc cy">${tn}</td><td class="tc cr">${td2}</td><td class="tc ns ${tc}">${tot.v}</td></tr>`;
+  document.getElementById('tbm').innerHTML=html||'<tr><td colspan="9" class="empty">Sem dados</td></tr>';
+}
+
+// ── TABLE EMPRESA ─────────────────────────────────────────────
+function renderEmp(){
+  const em={};
+  fd.r.forEach(r=>{if(!em[r.empresa])em[r.empresa]={r:[],disp:0,si:0,dates:[]};em[r.empresa].r.push(r);em[r.empresa].dates.push(r.data);});
+  fd.da.forEach(r=>{if(!em[r.empresa])em[r.empresa]={r:[],disp:0,si:0,dates:[]};em[r.empresa].disp+=r.sim+r.nao;});
+  fd.sa.forEach(r=>{if(em[r.empresa])em[r.empresa].si+=r.total;});
+  const names=Object.keys(em).sort((a,b)=>{const na=calcNPS(em[a].r).v,nb=calcNPS(em[b].r).v;if(na==='—')return 1;if(nb==='—')return-1;return nb-na;});
+  document.getElementById('empCnt').textContent=names.length+' empresas';
+  let html='';
+  names.forEach(e=>{
+    const x=em[e];const{v,t}=calcNPS(x.r);
+    const eng=x.disp?((t+x.si)/x.disp*100).toFixed(1)+'%':'—';
+    const nc=v==='—'?'':v>=50?'nsp':v>=0?'nsn':'nsd';
+    const t1r=x.r.filter(r=>{const m=r.data.slice(0,7);return m>='2026-01'&&m<='2026-03';});
+    const t2r=x.r.filter(r=>{const m=r.data.slice(0,7);return m>='2026-04'&&m<='2026-06';});
+    const t1=calcNPS(t1r),t2=calcNPS(t2r);
+    const sd=x.dates.slice().sort();
+    html+=`<tr>
+      <td><b style="font-size:12px">${e}</b></td>
+      <td class="tc">${x.disp.toLocaleString('pt-BR')}</td><td class="tc">${t}</td><td class="tc">${x.si}</td><td class="tc">${eng}</td>
+      <td class="tc ns ${nc}">${v}</td>
+      <td class="tc" style="color:${npsCol(t1.t?t1.v:'—')};font-weight:700">${t1.t?t1.v:'—'}</td>
+      <td class="tc" style="color:${npsCol(t2.t?t2.v:'—')};font-weight:700">${t2.t?t2.v:'—'}</td>
+      <td class="tc" style="color:#71717a;font-size:12px">${fmtDate(sd[0])}</td>
+      <td class="tc" style="color:#71717a;font-size:12px">${fmtDate(sd[sd.length-1])}</td>
+    </tr>`;
+  });
+  document.getElementById('tbe').innerHTML=html||'<tr><td colspan="10" class="empty">Sem dados</td></tr>';
+}
+
+// ── MULTI-RESPOSTAS ───────────────────────────────────────────
+function buildMultiAll() {
+  const tm={};
+  RAW.respostas.forEach(r=>{if(!r.telefone)return;if(!tm[r.telefone])tm[r.telefone]=[];tm[r.telefone].push(r);});
+  muAll=Object.entries(tm).filter(([,v])=>v.length>1).map(([tel,resps])=>{
+    resps.sort((a,b)=>a.data.localeCompare(b.data));
+    const first=resps[0],last=resps[resps.length-1];
+    const fs=resScore(first.resultado),ls=resScore(last.resultado);
+    const result=ls>fs?'Melhorou':ls<fs?'Piorou':'Manteve';
+    return{tel,resps,nome:last.nome||'Anônimo',empresa:last.empresa||'—',result,lastNota:last.resultado};
+  }).sort((a,b)=>b.resps.length-a.resps.length);
+}
+
+function renderMultiAll() { buildMultiAll(); renderMultiSummary(); renderMulti(); }
+
+function renderMultiSummary() {
+  const total=muAll.length;
+  const melhorou=muAll.filter(u=>u.result==='Melhorou').length;
+  const piorou=muAll.filter(u=>u.result==='Piorou').length;
+  const manteve=muAll.filter(u=>u.result==='Manteve').length;
+  const pctMelh=total?Math.round(melhorou/total*100):0;
+  document.getElementById('muSummary').innerHTML=`
+    <div class="mu-stat"><div class="v">${total}</div><div class="l">Usuários distintos</div></div>
+    <div class="mu-stat"><div class="v" style="color:var(--green)">${melhorou}</div><div class="l">Melhoraram (${pctMelh}%)</div></div>
+    <div class="mu-stat"><div class="v" style="color:var(--dim)">${manteve}</div><div class="l">Mantiveram nota</div></div>
+    <div class="mu-stat"><div class="v" style="color:var(--red)">${piorou}</div><div class="l">Pioraram</div></div>`;
+  document.getElementById('muCnt').textContent=total+' usuários';
+}
+
+function renderMulti() {
+  const fRes=document.getElementById('fMuRes').value;
+  const fNota=document.getElementById('fMuNota').value;
+  let list=muAll.filter(u=>(!fRes||u.result===fRes)&&(!fNota||u.lastNota===fNota));
+  let html='';
+  list.forEach(({tel,resps,nome,empresa,result})=>{
+    const hist=resps.map((r,i)=>{
+      const prev=i>0?resps[i-1]:null;
+      let st='';
+      if(prev){if(isP(r.nota)&&!isP(prev.nota))st='style="color:#1db954;font-weight:600"';else if(isD(r.nota)&&!isD(prev.nota))st='style="color:#f87171;font-weight:600"';}
+      return`${i>0?'<span class="arr-d">↓</span>':''}<div class="mr-line"><span style="color:#71717a;font-size:11px">${fmtDate(r.data)}</span><span ${st}>${r.nota}</span><span class="badge ${r.resultado==='Promotor'?'bp':r.resultado==='Detrator'?'bd':'bn'}">${r.resultado}</span></div>`;
+    }).join('');
+    const icon=result==='Melhorou'?'📈':result==='Piorou'?'📉':'↔️';
+    const col=result==='Melhorou'?'var(--green)':result==='Piorou'?'var(--red)':'var(--dim)';
+    html+=`<tr>
+      <td><b>${nome}</b><br><span style="color:#71717a;font-size:11px">${tel}</span></td>
+      <td style="font-size:12px">${empresa}</td>
+      <td class="tc" style="font-size:22px;font-weight:700;color:var(--green)">${resps.length}</td>
+      <td><div class="mr-wrap">${hist}</div></td>
+      <td style="font-size:13px;white-space:nowrap;color:${col}">${icon} ${result}</td>
+    </tr>`;
+  });
+  document.getElementById('tbmu').innerHTML=html||'<tr><td colspan="5" class="empty">Nenhum usuário encontrado com esses filtros</td></tr>';
+}
+
+// ── TABLE DETALHES ────────────────────────────────────────────
+function renderD(){
+  const q=(document.getElementById('srch').value||'').toLowerCase();
+  const rows=fd.r.filter(r=>!q||[r.nome,r.empresa,r.motivo,r.nota].some(v=>v&&v.toLowerCase().includes(q))).slice(0,500);
+  document.getElementById('dCnt').textContent=rows.length+(rows.length===500?'+':'')+' resultados';
+  const html=rows.map(r=>`<tr>
+    <td style="white-space:nowrap;color:#71717a">${fmtDate(r.data)}</td>
+    <td>${r.nome||'—'}</td><td style="font-size:12px;color:#a1a1aa">${r.empresa||'—'}</td>
+    <td>${r.nota}</td>
+    <td><span class="badge ${r.resultado==='Promotor'?'bp':r.resultado==='Detrator'?'bd':'bn'}">${r.resultado}</span></td>
+    <td style="max-width:280px;font-size:12px;color:#71717a">${r.motivo||'—'}</td>
+  </tr>`).join('');
+  document.getElementById('tbd').innerHTML=html||'<tr><td colspan="6" class="empty">Nenhum resultado</td></tr>';
+}
+
+// ── TABS ──────────────────────────────────────────────────────
+function showTab(id,el){
+  document.querySelectorAll('.tbc').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('t-'+id).classList.add('active');
+  el.classList.add('active');
+}
+
+// ── INIT ──────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded',loadData);
+</script>
+</body>
+</html>
