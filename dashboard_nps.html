@@ -1061,12 +1061,11 @@ function renderMultiSummary() {
     <span style="font-size:10px;font-weight:700;color:var(--text);white-space:nowrap">${vol} <span style="font-weight:400;color:var(--dim)">(${pctVal}%)</span></span>
   </div>`;
   const box=(label,val,color,pctTotal,rows,onclick='')=>`
-    <div style="flex:1;min-width:180px;border:1px solid var(--dim3);border-radius:14px;padding:20px 18px 16px;background:var(--bg2);display:flex;flex-direction:column;gap:0;${onclick?'cursor:pointer;transition:border-color .2s,box-shadow .2s;':''}" ${onclick?`onclick="${onclick}" onmouseenter="this.style.borderColor='rgba(29,185,84,.4)';this.style.boxShadow='0 4px 16px rgba(29,185,84,.1)'" onmouseleave="this.style.borderColor='';this.style.boxShadow=''"`:''}">
+    <div style="flex:1;min-width:180px;border:1px solid var(--dim3);border-radius:14px;padding:20px 18px 16px;background:var(--bg2);display:flex;flex-direction:column;gap:0;${onclick?'cursor:pointer;':''}" ${onclick?`onclick="${onclick}"`:''}">
       <div style="font-size:52px;font-weight:900;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-1px;${color?'color:'+color:''};margin-bottom:2px">${val}</div>
       <div style="font-size:12px;font-weight:700;color:var(--text);letter-spacing:.03em">${label}</div>
       ${pctTotal!==null?`<div style="font-size:11px;color:var(--dim);margin-bottom:${rows?'10px':'2px'}">${pctTotal}% do total</div>`:(rows?'<div style="margin-bottom:10px"></div>':'')}
       ${rows||''}
-      ${onclick?`<div style="font-size:10px;color:var(--dim);margin-top:6px;opacity:.6">↗ ver respostas</div>`:''}
     </div>`;
   document.getElementById('muSummary').innerHTML=`
     <div style="display:flex;gap:12px;flex-wrap:wrap">
@@ -1104,7 +1103,7 @@ function renderMulti() {
     const safeTel=tel?tel.replace(/'/g,"\\'"):'';
     const phoneOnclick=safeTel?`goToRespostas({phones:['${safeTel}'],label:'Respostas de ${nome.replace(/'/g,"\\'")} (${tel})'})`:'' ;
     html+=`<tr style="${safeTel?'cursor:pointer':''}">
-      <td onclick="${phoneOnclick}" style="${safeTel?'cursor:pointer':''}"><b style="${safeTel?'text-decoration:underline;text-decoration-style:dotted;text-underline-offset:3px;':''}">${nome}</b><br><span style="color:#71717a;font-size:11px">${tel}</span>${safeTel?`<br><span style="font-size:10px;color:var(--green);opacity:.7">↗ ver respostas</span>`:''}</td>
+      <td onclick="${phoneOnclick}"><b>${nome}</b><br><span style="color:#71717a;font-size:11px">${tel}</span></td>
       <td style="font-size:12px">${empresa}</td>
       <td class="tc" style="font-size:22px;font-weight:700;color:var(--green)">${resps.length}</td>
       <td><div class="mr-wrap">${hist}</div></td>
@@ -1132,27 +1131,22 @@ function clearPhoneFilter(){
   renderD();
 }
 function goToRespostas({result='',phones=null,label=''}={}){
-  // Switch tab
-  document.querySelectorAll('.tbc').forEach(t=>t.classList.remove('active'));
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  const tEl=document.getElementById('t-d');
-  if(tEl)tEl.classList.add('active');
-  const tabBtn=Array.from(document.querySelectorAll('.tab')).find(t=>t.textContent.trim()==='Respostas');
-  if(tabBtn)tabBtn.classList.add('active');
-  // Set filters
-  _dFilter=result;
-  _phoneFilter=phones&&phones.length?new Set(phones):null;
-  _phoneFilterLabel=label;
-  document.querySelectorAll('.d-qbtn').forEach(b=>b.classList.remove('active'));
-  if(_dFilter){
-    document.querySelectorAll('.d-qbtn').forEach(b=>{
-      const txt=b.textContent.trim();
-      if((result==='Promotor'&&txt.includes('Promotor'))||(result==='Neutro'&&txt.includes('Neutro'))||(result==='Detrator'&&txt.includes('Detrator')))b.classList.add('active');
-    });
-  }
-  document.getElementById('srch').value='';
-  renderD();
-  window.scrollTo({top:0,behavior:'smooth'});
+  // Build filtered responses and open in modal popup
+  const phoneSet=phones&&phones.length?new Set(phones):null;
+  let rows=fd.r.filter(r=>r.empresa&&r.empresa.toLowerCase()!=='kesh bank');
+  if(phoneSet)rows=rows.filter(r=>r.telefone&&phoneSet.has(r.telefone));
+  if(result)rows=rows.filter(r=>r.resultado===result);
+  const title=(label||'Respostas')+' ('+rows.length+')';
+  const thead='<tr><th>Data</th><th>Nome</th><th>Empresa</th><th>Nota</th><th>Resultado</th><th>Motivo</th></tr>';
+  const tbody=rows.slice(0,500).map(r=>`<tr>
+    <td style="white-space:nowrap;color:#71717a">${fmtDate(r.data)}</td>
+    <td>${r.nome||'—'}</td>
+    <td style="font-size:12px;color:#a1a1aa">${r.empresa||'—'}</td>
+    <td>${r.nota}</td>
+    <td><span class="badge ${r.resultado==='Promotor'?'bp':r.resultado==='Detrator'?'bd':'bn'}">${r.resultado}</span></td>
+    <td style="max-width:260px;font-size:12px;color:#71717a">${r.motivo||'—'}</td>
+  </tr>`).join('');
+  openModal(title,thead,tbody||'<tr><td colspan="6" style="text-align:center;padding:30px;color:#71717a">Nenhuma resposta encontrada</td></tr>');
 }
 function renderD(){
   const q=(document.getElementById('srch').value||'').toLowerCase();
