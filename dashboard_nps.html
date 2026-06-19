@@ -164,10 +164,10 @@ html.light td,html.light th{border-color:var(--dim3)}
 
 
 /* MODAL */
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:8000;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:.25s}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:8000;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:.25s;padding:16px}
 .modal-overlay.open{opacity:1;pointer-events:all}
-.modal-panel{background:var(--bg2);border-radius:16px 16px 0 0;width:100%;max-width:900px;max-height:80vh;display:flex;flex-direction:column;transform:translateY(100%);transition:.3s}
-.modal-overlay.open .modal-panel{transform:translateY(0)}
+.modal-panel{background:var(--bg2);border-radius:16px;width:100%;max-width:960px;max-height:88vh;display:flex;flex-direction:column;transform:translateY(16px) scale(.97);transition:.3s}
+.modal-overlay.open .modal-panel{transform:translateY(0) scale(1)}
 .modal-head{padding:16px 22px;border-bottom:1px solid var(--dim3);display:flex;align-items:center;justify-content:space-between}
 .modal-head h3{font-size:15px;font-weight:600}
 .modal-close{background:var(--bg3);border:1px solid var(--dim3);color:var(--dim);width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:16px;line-height:1;display:flex;align-items:center;justify-content:center}
@@ -644,7 +644,7 @@ function applyF() {
   fd.sa=RAW.si_agg.filter(r=>(!fr||r.mes+'-01'>=fr.slice(0,7)+'-01')&&(!to||r.mes+'-01'<=to.slice(0,7)+'-31')&&(!em||r.empresa===em));
   // Company-only filtered (for monthly evolution charts)
   fd.rComp=RAW.respostas.filter(r=>!em||r.empresa===em);
-  fd.daComp=RAW.disparos_agg.filter(r=>!em||r.empresa===em);
+  fd.daComp=RAW.disparos_agg.filter(r=>(!fr||r.mes+'-01'>=fr.slice(0,7)+'-01')&&(!to||r.mes+'-01'<=to.slice(0,7)+'-31')&&(!em||r.empresa===em));
   fd.saComp=RAW.si_agg.filter(r=>!em||r.empresa===em);
   renderAll();
 }
@@ -932,7 +932,10 @@ function renderEmp(){
   // Build rows - each company has its OWN ciclos (1st/2nd/3rd dispatch month)
   _empRows=Object.keys(em).map(e=>{
     const x=em[e];
-    const{v,t}=calcNPS(x.r);
+    const{t}=calcNPS(x.r);
+    // NPS Geral: calculado sobre TODAS as respostas da empresa (todos os ciclos)
+    const _allCompR=fd.rComp.filter(r=>r.empresa===e);
+    const{v}=_allCompR.length?calcNPS(_allCompR):{v:'—'};
     const eng=x.disp?(t/x.disp*100).toFixed(1)+'%':'—';
     const engN=x.disp?(t/x.disp*100):0;
     const nc=v==='—'?'':v>=50?'nsp':v>=0?'nsn':'nsd';
@@ -943,7 +946,7 @@ function renderEmp(){
     const pesquisas=sortedMonths.length;
     // Ciclos 1-3: NPS in that company's Nth dispatch month
     const cicloNPS=sortedMonths.slice(0,3).map(m=>{
-      const cr=fd.rComp.filter(r=>r.empresa===e&&r.data.startsWith(m));
+      const cr=fd.r.filter(r=>r.empresa===e&&r.data.startsWith(m));
       return cr.length?calcNPS(cr).v:'—';
     });
     // Pad to 3
@@ -1024,9 +1027,12 @@ function renderEmpTable(){
 
 // ── MULTI-RESPOSTAS ───────────────────────────────────────────
 function buildMultiAll() {
-  const tm={};
-  RAW.respostas.forEach(r=>{if(!r.telefone)return;if(!tm[r.telefone])tm[r.telefone]=[];tm[r.telefone].push(r);});
-  muAll=Object.entries(tm).filter(([,v])=>v.length>1).map(([tel,resps])=>{
+  // Monta histórico completo de cada telefone a partir de TODOS os dados
+  const tmAll={};
+  RAW.respostas.forEach(r=>{if(!r.telefone)return;if(!tmAll[r.telefone])tmAll[r.telefone]=[];tmAll[r.telefone].push(r);});
+  // Inclui apenas usuários que têm ao menos 1 resposta no período filtrado (fd.r)
+  const filteredPhones=new Set(fd.r.filter(r=>r.telefone).map(r=>r.telefone));
+  muAll=Object.entries(tmAll).filter(([tel,v])=>v.length>1&&filteredPhones.has(tel)).map(([tel,resps])=>{
     resps.sort((a,b)=>a.data.localeCompare(b.data));
     const first=resps[0],last=resps[resps.length-1];
     const fs=resScore(first.resultado),ls=resScore(last.resultado);
@@ -1044,6 +1050,7 @@ function renderMultiSummary() {
   const melhorou=muAll.filter(u=>u.result==='Melhorou').length;
   const melhNeut2Prom=muAll.filter(u=>u.result==='Melhorou'&&u.firstNota==='Neutro'&&u.lastNota==='Promotor').length;
   const melhDetr2Prom=muAll.filter(u=>u.result==='Melhorou'&&u.firstNota==='Detrator'&&u.lastNota==='Promotor').length;
+  const melhDetr2Neut=muAll.filter(u=>u.result==='Melhorou'&&u.firstNota==='Detrator'&&u.lastNota==='Neutro').length;
   // Mantiveram breakdowns
   const manteve=muAll.filter(u=>u.result==='Manteve').length;
   const mantProm=muAll.filter(u=>u.result==='Manteve'&&u.lastNota==='Promotor').length;
@@ -1066,6 +1073,7 @@ function renderMultiSummary() {
       <div style="font-size:12px;font-weight:700;color:var(--text);letter-spacing:.03em">${label}</div>
       ${pctTotal!==null?`<div style="font-size:11px;color:var(--dim);margin-bottom:${rows?'10px':'2px'}">${pctTotal}% do total</div>`:(rows?'<div style="margin-bottom:10px"></div>':'')}
       ${rows||''}
+      ${onclick?`<div style="font-size:10px;color:var(--dim);margin-top:6px;opacity:.6">↗ ver respostas</div>`:''}
     </div>`;
   document.getElementById('muSummary').innerHTML=`
     <div style="display:flex;gap:12px;flex-wrap:wrap">
@@ -1073,7 +1081,8 @@ function renderMultiSummary() {
       ${(()=>{const phones=muAll.map(u=>u.tel).filter(Boolean);const onclick=`goToRespostas({phones:${JSON.stringify(phones)},label:'${total} usuários com múltiplas respostas'})`;return box('Usuários Distintos',total,'',null,'',onclick);})()}
       ${(()=>{const phones=muAll.filter(u=>u.result==='Melhorou').map(u=>u.tel).filter(Boolean);const onclick=phones.length?`goToRespostas({phones:${JSON.stringify(phones)},label:'${melhorou} usuários que Melhoraram'})`:'';return box('Melhoraram',melhorou,'#4ade80',pct(melhorou),
         row('Neutro → Promotor',melhNeut2Prom,pctOf(melhNeut2Prom,melhorou))+
-        row('Detrator → Promotor',melhDetr2Prom,pctOf(melhDetr2Prom,melhorou)),onclick);})()}
+        row('Detrator → Promotor',melhDetr2Prom,pctOf(melhDetr2Prom,melhorou))+
+        row('Detrator → Neutro',melhDetr2Neut,pctOf(melhDetr2Neut,melhorou)),onclick);})()}
       ${(()=>{const phones=muAll.filter(u=>u.result==='Manteve').map(u=>u.tel).filter(Boolean);const onclick=phones.length?`goToRespostas({phones:${JSON.stringify(phones)},label:'${manteve} usuários que Mantiveram'})`:'';return box('Mantiveram',manteve,'#a1a1aa',pct(manteve),
         row('Mantiveram Promotor',mantProm,pctOf(mantProm,manteve))+
         row('Mantiveram Neutro',mantNeut,pctOf(mantNeut,manteve))+
@@ -1101,7 +1110,7 @@ function renderMulti() {
     const icon=result==='Melhorou'?'📈':result==='Piorou'?'📉':'↔️';
     const col=result==='Melhorou'?'var(--green)':result==='Piorou'?'var(--red)':'var(--dim)';
     const safeTel=tel?tel.replace(/'/g,"\\'"):'';
-    const phoneOnclick=safeTel?`goToRespostas({phones:['${safeTel}'],label:'Respostas de ${nome.replace(/'/g,"\\'")} (${tel})'})`:'' ;
+    const phoneOnclick=safeTel?`goToRespostas({phones:['${safeTel}'],label:'Respostas de ${nome.replace(/'/g,"\\'")} (${tel})',useAll:true})`:'' ;
     html+=`<tr style="${safeTel?'cursor:pointer':''}">
       <td onclick="${phoneOnclick}"><b>${nome}</b><br><span style="color:#71717a;font-size:11px">${tel}</span></td>
       <td style="font-size:12px">${empresa}</td>
@@ -1130,10 +1139,9 @@ function clearPhoneFilter(){
   if(banner)banner.style.display='none';
   renderD();
 }
-function goToRespostas({result='',phones=null,label=''}={}){
-  // Build filtered responses and open in modal popup
+function goToRespostas({result='',phones=null,label='',useAll=false}={}){
   const phoneSet=phones&&phones.length?new Set(phones):null;
-  let rows=fd.r.filter(r=>r.empresa&&r.empresa.toLowerCase()!=='kesh bank');
+  let rows=(useAll?RAW.respostas:fd.r).filter(r=>r.empresa&&r.empresa.toLowerCase()!=='kesh bank');
   if(phoneSet)rows=rows.filter(r=>r.telefone&&phoneSet.has(r.telefone));
   if(result)rows=rows.filter(r=>r.resultado===result);
   const title=(label||'Respostas')+' ('+rows.length+')';
